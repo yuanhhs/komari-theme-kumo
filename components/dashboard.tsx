@@ -53,7 +53,7 @@ function CenteredState({
 }
 
 export function Dashboard() {
-  const { t, view, columns, surface, background, seedDefaults } = useSettings();
+  const { t, view, columns, background, seedDefaults } = useSettings();
   const { views, isLoading, error, lastUpdated, refresh } = useDashboard();
   const { data: info } = usePublicInfo();
   const { data: version } = useVersion();
@@ -116,18 +116,11 @@ export function Dashboard() {
   return (
     <div className="relative min-h-screen">
       {bgUrl ? (
-        <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url("${bgUrl}")` }}
-          />
-          <div
-            className={cn(
-              "absolute inset-0",
-              surface === "glass" ? "bg-kumo-canvas/40" : "bg-kumo-canvas/65",
-            )}
-          />
-        </div>
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url("${bgUrl}")` }}
+        />
       ) : null}
 
       <SiteHeader
