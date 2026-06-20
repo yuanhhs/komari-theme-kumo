@@ -1,0 +1,285 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  DEFAULT_LANG,
+  detectLang,
+  isLang,
+  translate,
+  type Lang,
+  type TKey,
+} from "@/lib/i18n";
+
+export type Appearance = "light" | "dark" | "system";
+export type Mode = "light" | "dark";
+export type ViewMode = "grid" | "list";
+export type Accent = "default" | "blue" | "violet" | "emerald" | "rose" | "cyan";
+/** Cards per row on wide screens. */
+export type Columns = 4 | 5;
+/** Card surface style: opaque or frosted glass (translucent + backdrop-blur). */
+export type Surface = "solid" | "glass";
+
+/** Accent overrides for `--color-kumo-brand`; `light-dark()` keeps both modes correct. */
+const ACCENTS: Record<Exclude<Accent, "default">, { brand: string; hover: string }> = {
+  blue: {
+    brand: "light-dark(oklch(54% 0.2 256), oklch(70% 0.16 256))",
+    hover: "light-dark(oklch(48% 0.21 256), oklch(76% 0.15 256))",
+  },
+  violet: {
+    brand: "light-dark(oklch(52% 0.25 295), oklch(70% 0.19 295))",
+    hover: "light-dark(oklch(46% 0.26 295), oklch(76% 0.18 295))",
+  },
+  emerald: {
+    brand: "light-dark(oklch(52% 0.15 158), oklch(70% 0.15 158))",
+    hover: "light-dark(oklch(46% 0.15 158), oklch(76% 0.14 158))",
+  },
+  rose: {
+    brand: "light-dark(oklch(55% 0.21 14), oklch(70% 0.18 14))",
+    hover: "light-dark(oklch(49% 0.22 14), oklch(76% 0.17 14))",
+  },
+  cyan: {
+    brand: "light-dark(oklch(55% 0.12 220), oklch(72% 0.12 220))",
+    hover: "light-dark(oklch(49% 0.12 220), oklch(78% 0.11 220))",
+  },
+};
+
+export const ACCENT_KEYS: Accent[] = [
+  "default",
+  "blue",
+  "violet",
+  "emerald",
+  "rose",
+  "cyan",
+];
+
+const LS = {
+  appearance: "appearance",
+  lang: "language",
+  view: "kumo-view",
+  accent: "kumo-accent",
+  columns: "kumo-cols",
+  surface: "kumo-surface",
+  background: "kumo-bg",
+} as const;
+
+function readLS(key: string): string | null {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeLS(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* storage may be unavailable (private mode, etc.) */
+  }
+}
+
+interface SettingsContextValue {
+  lang: Lang;
+  setLang: (lang: Lang) => void;
+  appearance: Appearance;
+  setAppearance: (a: Appearance) => void;
+  /** Resolved light/dark after applying the system preference. */
+  mode: Mode;
+  view: ViewMode;
+  setView: (v: ViewMode) => void;
+  accent: Accent;
+  setAccent: (a: Accent) => void;
+  columns: Columns;
+  setColumns: (c: Columns) => void;
+  surface: Surface;
+  setSurface: (s: Surface) => void;
+  /** Visitor-uploaded background (data URL); overrides the admin default locally. */
+  background: string;
+  setBackground: (url: string) => void;
+  /** Apply admin-provided defaults for any pref the user has not set. */
+  seedDefaults: (d: {
+    appearance?: Appearance;
+    view?: ViewMode;
+    accent?: Accent;
+    columns?: Columns;
+    surface?: Surface;
+  }) => void;
+  t: (key: TKey, vars?: Record<string, string | number>) => string;
+  mounted: boolean;
+}
+
+const SettingsContext = createContext<SettingsContextValue | null>(null);
+
+export function Providers({ children }: { children: ReactNode }) {
+  const [appearance, setAppearanceState] = useState<Appearance>("system");
+  const [lang, setLangState] = useState<Lang>(DEFAULT_LANG);
+  const [view, setViewState] = useState<ViewMode>("grid");
+  const [accent, setAccentState] = useState<Accent>("default");
+  const [columns, setColumnsState] = useState<Columns>(4);
+  const [surface, setSurfaceState] = useState<Surface>("solid");
+  const [background, setBackgroundState] = useState<string>("");
+  const [systemDark, setSystemDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Hydrate persisted prefs after mount (avoids SSR/client mismatch).
+  useEffect(() => {
+    const a = readLS(LS.appearance);
+    if (a === "light" || a === "dark" || a === "system") setAppearanceState(a);
+    const l = readLS(LS.lang);
+    setLangState(isLang(l) ? l : detectLang());
+    const v = readLS(LS.view);
+    if (v === "grid" || v === "list") setViewState(v);
+    const ac = readLS(LS.accent);
+    if (ac && (ac === "default" || ac in ACCENTS)) setAccentState(ac as Accent);
+    const c = readLS(LS.columns);
+    if (c === "4" || c === "5") setColumnsState(Number(c) as Columns);
+    const sf = readLS(LS.surface);
+    if (sf === "solid" || sf === "glass") setSurfaceState(sf);
+    const bg = readLS(LS.background);
+    if (bg) setBackgroundState(bg);
+    setMounted(true);
+  }, []);
+
+  // Track the system color-scheme preference.
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    setSystemDark(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const mode: Mode =
+    appearance === "system" ? (systemDark ? "dark" : "light") : appearance;
+
+  // Reflect resolved mode + language onto <html>.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute("data-mode", mode);
+    root.style.colorScheme = mode;
+  }, [mode]);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  // Reflect the card surface style onto <html> for the glass CSS rule.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-surface", surface);
+  }, [surface]);
+
+  // Apply accent by overriding the kumo brand token on <html>.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (accent === "default") {
+      root.style.removeProperty("--color-kumo-brand");
+      root.style.removeProperty("--color-kumo-brand-hover");
+    } else {
+      root.style.setProperty("--color-kumo-brand", ACCENTS[accent].brand);
+      root.style.setProperty("--color-kumo-brand-hover", ACCENTS[accent].hover);
+    }
+  }, [accent]);
+
+  const setAppearance = useCallback((a: Appearance) => {
+    setAppearanceState(a);
+    writeLS(LS.appearance, a);
+  }, []);
+  const setLang = useCallback((l: Lang) => {
+    setLangState(l);
+    writeLS(LS.lang, l);
+  }, []);
+  const setView = useCallback((v: ViewMode) => {
+    setViewState(v);
+    writeLS(LS.view, v);
+  }, []);
+  const setAccent = useCallback((a: Accent) => {
+    setAccentState(a);
+    writeLS(LS.accent, a);
+  }, []);
+  const setColumns = useCallback((c: Columns) => {
+    setColumnsState(c);
+    writeLS(LS.columns, String(c));
+  }, []);
+  const setSurface = useCallback((s: Surface) => {
+    setSurfaceState(s);
+    writeLS(LS.surface, s);
+  }, []);
+  const setBackground = useCallback((url: string) => {
+    setBackgroundState(url);
+    if (url) {
+      writeLS(LS.background, url);
+    } else {
+      try {
+        localStorage.removeItem(LS.background);
+      } catch {
+        /* storage may be unavailable */
+      }
+    }
+  }, []);
+
+  const seedDefaults = useCallback(
+    (d: {
+      appearance?: Appearance;
+      view?: ViewMode;
+      accent?: Accent;
+      columns?: Columns;
+      surface?: Surface;
+    }) => {
+      if (d.appearance && readLS(LS.appearance) === null) setAppearance(d.appearance);
+      if (d.view && readLS(LS.view) === null) setView(d.view);
+      if (d.accent && readLS(LS.accent) === null) setAccent(d.accent);
+      if (d.columns && readLS(LS.columns) === null) setColumns(d.columns);
+      if (d.surface && readLS(LS.surface) === null) setSurface(d.surface);
+    },
+    [setAppearance, setView, setAccent, setColumns, setSurface],
+  );
+
+  const t = useCallback(
+    (key: TKey, vars?: Record<string, string | number>) =>
+      translate(lang, key, vars),
+    [lang],
+  );
+
+  const value = useMemo<SettingsContextValue>(
+    () => ({
+      lang,
+      setLang,
+      appearance,
+      setAppearance,
+      mode,
+      view,
+      setView,
+      accent,
+      setAccent,
+      columns,
+      setColumns,
+      surface,
+      setSurface,
+      background,
+      setBackground,
+      seedDefaults,
+      t,
+      mounted,
+    }),
+    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, background, setBackground, seedDefaults, t, mounted],
+  );
+
+  return (
+    <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>
+  );
+}
+
+export function useSettings(): SettingsContextValue {
+  const ctx = useContext(SettingsContext);
+  if (!ctx) throw new Error("useSettings must be used within <Providers>");
+  return ctx;
+}

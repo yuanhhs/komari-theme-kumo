@@ -1,0 +1,82 @@
+/*
+ * Kumo + Tailwind v4 wiring. Order matters (see @cloudflare/kumo USAGE.md):
+ *   1. @source so Tailwind scans kumo's compiled JS for class names
+ *   2. kumo styles (registers its @theme tokens) BEFORE tailwindcss
+ *   3. tailwindcss engine
+ */
+@source "../node_modules/@cloudflare/kumo/dist/**/*.{js,jsx,ts,tsx}";
+@import "@cloudflare/kumo/styles";
+@import "tailwindcss";
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-kumo-canvas, #fff);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Honour the user's appearance choice for native UI (scrollbars, form controls). */
+:root {
+  color-scheme: light;
+}
+:root[data-mode="dark"] {
+  color-scheme: dark;
+}
+
+/* A restrained, theme-aware scrollbar so it never fights the Kumo surfaces. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, currentColor 18%, transparent) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, currentColor 16%, transparent);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, currentColor 28%, transparent);
+}
+
+@keyframes kumo-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kumo-fade-in {
+  animation: kumo-fade-in 0.28s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kumo-fade-in {
+    animation: none;
+  }
+}
+
+/*
+ * Frosted-glass card style (data-surface="glass"). Unlayered so it overrides
+ * the layered `bg-kumo-base` utility on .kumo-surface. Translucent surface +
+ * backdrop blur so a custom background shows through.
+ */
+html[data-surface="glass"] .kumo-surface {
+  background-color: color-mix(in oklab, var(--color-kumo-base) 55%, transparent);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+}
+html[data-surface="glass"] .kumo-surface:hover {
+  background-color: color-mix(in oklab, var(--color-kumo-base) 66%, transparent);
+}

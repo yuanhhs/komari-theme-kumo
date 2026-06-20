@@ -1,0 +1,86 @@
+{
+  "name": "Kumo for Komari",
+  "short": "Kumo",
+  "description": "A clean, responsive Komari monitor theme built with Cloudflare's Kumo design system.",
+  "author": "Yuanhhs",
+  "url": "https://komari.yuanhhs.online/",
+  "preview": "preview.png",
+  "configuration": {
+    "type": "managed",
+    "name": { "zh-CN": "Kumo 主题设置", "en": "Kumo Theme" },
+    "data": [
+      { "type": "title", "name": { "zh-CN": "外观", "en": "Appearance" } },
+      {
+        "key": "defaultAppearance",
+        "type": "select",
+        "options": "system,light,dark",
+        "default": "system",
+        "name": { "zh-CN": "默认外观", "en": "Default appearance" },
+        "help": { "zh-CN": "访客首次访问时的明暗模式", "en": "Light/dark mode for first-time visitors" }
+      },
+      {
+        "key": "defaultView",
+        "type": "select",
+        "options": "grid,list",
+        "default": "grid",
+        "name": { "zh-CN": "默认视图", "en": "Default view" }
+      },
+      {
+        "key": "defaultColumns",
+        "type": "select",
+        "options": "4,5",
+        "default": "4",
+        "name": { "zh-CN": "默认每行列数", "en": "Default columns" },
+        "help": { "zh-CN": "网格视图宽屏下每行卡片数", "en": "Cards per row in grid view on wide screens" }
+      },
+      {
+        "key": "cardStyle",
+        "type": "select",
+        "options": "solid,glass",
+        "default": "solid",
+        "name": { "zh-CN": "卡片样式", "en": "Card style" },
+        "help": { "zh-CN": "实心或磨砂（半透明 + 背景模糊）", "en": "Solid or frosted glass (translucent + backdrop blur)" }
+      },
+      {
+        "key": "defaultAccent",
+        "type": "select",
+        "options": "default,blue,violet,emerald,rose,cyan",
+        "default": "default",
+        "name": { "zh-CN": "主题色", "en": "Accent color" }
+      },
+      { "type": "title", "name": { "zh-CN": "显示", "en": "Display" } },
+      {
+        "key": "showOfflineLast",
+        "type": "switch",
+        "default": true,
+        "name": { "zh-CN": "离线节点排在最后", "en": "Sort offline nodes last" }
+      },
+      {
+        "key": "enableGroupTabs",
+        "type": "switch",
+        "default": true,
+        "name": { "zh-CN": "显示分组筛选", "en": "Show group filter" }
+      },
+      {
+        "key": "logoUrl",
+        "type": "string",
+        "default": "",
+        "name": { "zh-CN": "Logo 图片 URL", "en": "Logo image URL" },
+        "help": { "zh-CN": "留空使用内置云朵图标", "en": "Leave empty to use the built-in cloud mark" }
+      },
+      {
+        "key": "backgroundUrl",
+        "type": "string",
+        "default": "",
+        "name": { "zh-CN": "背景图 URL", "en": "Background image URL" }
+      },
+      {
+        "key": "footerNote",
+        "type": "richtext",
+        "default": "",
+        "name": { "zh-CN": "页脚备注 (HTML)", "en": "Footer note (HTML)" },
+        "help": { "zh-CN": "显示在“Powered by Komari Monitor.”上方", "en": "Shown above the Powered-by line" }
+      }
+    ]
+  }
+}

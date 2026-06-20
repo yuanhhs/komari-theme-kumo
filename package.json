@@ -1,0 +1,35 @@
+{
+  "name": "komari-theme-kumo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Kumo — a Komari monitor theme built with Cloudflare's Kumo design system",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "export": "cross-env BUILD_EXPORT=true next build",
+    "build:theme": "node scripts/package-theme.mjs",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cloudflare/kumo": "^2.5.2",
+    "@phosphor-icons/react": "^2.1.10",
+    "echarts": "^6.0.0",
+    "next": "^15.5.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "simple-icons": "^16.23.0",
+    "swr": "^2.2.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "archiver": "^7.0.1",
+    "cross-env": "^7.0.3",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.0"
+  }
+}

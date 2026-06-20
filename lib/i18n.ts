@@ -1,0 +1,238 @@
+/** Tiny dependency-free i18n: zh-CN + en, with `{count}` interpolation. */
+
+export const LANGS = ["zh-CN", "en"] as const;
+export type Lang = (typeof LANGS)[number];
+export const DEFAULT_LANG: Lang = "zh-CN";
+
+export function isLang(value: unknown): value is Lang {
+  return typeof value === "string" && (LANGS as readonly string[]).includes(value);
+}
+
+/** Best-effort language from the browser; falls back to the default. */
+export function detectLang(): Lang {
+  if (typeof navigator === "undefined") return DEFAULT_LANG;
+  const nav = navigator.language?.toLowerCase() ?? "";
+  if (nav.startsWith("zh")) return "zh-CN";
+  if (nav.startsWith("en")) return "en";
+  return DEFAULT_LANG;
+}
+
+type Dict = Record<string, string>;
+
+const en: Dict = {
+  online: "Online",
+  offline: "Offline",
+  nodes: "Nodes",
+  servers: "Servers",
+  regions: "Regions",
+  currentTime: "Current time",
+  trafficOverview: "Total traffic",
+  networkSpeed: "Network speed",
+  upload: "Upload",
+  download: "Download",
+  cpu: "CPU",
+  memory: "Memory",
+  swap: "Swap",
+  disk: "Disk",
+  load: "Load",
+  network: "Network",
+  processes: "Processes",
+  connections: "Connections",
+  uptime: "Uptime",
+  temperature: "Temp",
+  gpu: "GPU",
+  ping: "Ping",
+  latency: "Latency",
+  packetLoss: "Loss",
+  search: "Search",
+  searchPlaceholder: "Search nodes…",
+  gridView: "Grid",
+  listView: "List",
+  view: "View",
+  all: "All",
+  ungrouped: "Ungrouped",
+  details: "Details",
+  overview: "Overview",
+  system: "System",
+  hardware: "Hardware",
+  billing: "Billing",
+  arch: "Architecture",
+  virtualization: "Virtualization",
+  kernel: "Kernel",
+  os: "OS",
+  cpuModel: "CPU model",
+  cores: "Cores",
+  expiresAt: "Expires",
+  neverExpires: "Never",
+  price: "Price",
+  free: "Free",
+  billingCycle: "Cycle",
+  days: "{count}d",
+  autoRenewal: "Auto-renew",
+  lastReport: "Last report",
+  noNodes: "No nodes yet",
+  noNodesDesc: "No servers are reporting to this instance.",
+  noResults: "No matching nodes",
+  noResultsDesc: "Try a different search term or group.",
+  loading: "Loading…",
+  errorTitle: "Could not reach the server",
+  errorRetry: "Retry",
+  poweredBy: "Powered by Komari Monitor.",
+  appearance: "Appearance",
+  light: "Light",
+  dark: "Dark",
+  systemMode: "System",
+  language: "Language",
+  accent: "Accent",
+  settings: "Settings",
+  close: "Close",
+  columns: "Columns",
+  cardStyle: "Card style",
+  solid: "Solid",
+  frosted: "Frosted",
+  background: "Background",
+  uploadImage: "Upload image",
+  removeBackground: "Remove",
+  justNow: "just now",
+  secondsAgo: "{count}s ago",
+  minutesAgo: "{count}m ago",
+  hoursAgo: "{count}h ago",
+  daysAgo: "{count}d ago",
+  loadHistory: "Load history",
+  networkHistory: "Network history",
+  pingHistory: "Latency",
+  range1h: "1h",
+  range6h: "6h",
+  range24h: "24h",
+  usage: "Usage",
+  total: "Total",
+  used: "Used",
+  realtime: "Live",
+  expiringSoon: "Expiring soon",
+  expired: "Expired",
+};
+
+const zhCN: Dict = {
+  online: "在线",
+  offline: "离线",
+  nodes: "节点",
+  servers: "服务器",
+  regions: "地区",
+  currentTime: "当前时间",
+  trafficOverview: "总流量",
+  networkSpeed: "网络速度",
+  upload: "上传",
+  download: "下载",
+  cpu: "处理器",
+  memory: "内存",
+  swap: "交换",
+  disk: "磁盘",
+  load: "负载",
+  network: "网络",
+  processes: "进程",
+  connections: "连接数",
+  uptime: "在线时长",
+  temperature: "温度",
+  gpu: "显卡",
+  ping: "延迟",
+  latency: "延迟",
+  packetLoss: "丢包",
+  search: "搜索",
+  searchPlaceholder: "搜索节点…",
+  gridView: "网格",
+  listView: "列表",
+  view: "视图",
+  all: "全部",
+  ungrouped: "未分组",
+  details: "详情",
+  overview: "概览",
+  system: "系统",
+  hardware: "硬件",
+  billing: "账单",
+  arch: "架构",
+  virtualization: "虚拟化",
+  kernel: "内核",
+  os: "操作系统",
+  cpuModel: "处理器型号",
+  cores: "核心",
+  expiresAt: "到期",
+  neverExpires: "永不过期",
+  price: "价格",
+  free: "免费",
+  billingCycle: "周期",
+  days: "{count}天",
+  autoRenewal: "自动续费",
+  lastReport: "最后上报",
+  noNodes: "暂无节点",
+  noNodesDesc: "还没有服务器向该实例上报数据。",
+  noResults: "没有匹配的节点",
+  noResultsDesc: "换一个搜索词或分组试试。",
+  loading: "加载中…",
+  errorTitle: "无法连接服务器",
+  errorRetry: "重试",
+  poweredBy: "Powered by Komari Monitor.",
+  appearance: "外观",
+  light: "浅色",
+  dark: "深色",
+  systemMode: "跟随系统",
+  language: "语言",
+  accent: "主题色",
+  settings: "设置",
+  close: "关闭",
+  columns: "每行列数",
+  cardStyle: "卡片样式",
+  solid: "实心",
+  frosted: "磨砂",
+  background: "背景",
+  uploadImage: "上传图片",
+  removeBackground: "移除",
+  justNow: "刚刚",
+  secondsAgo: "{count} 秒前",
+  minutesAgo: "{count} 分钟前",
+  hoursAgo: "{count} 小时前",
+  daysAgo: "{count} 天前",
+  loadHistory: "负载历史",
+  networkHistory: "网络历史",
+  pingHistory: "延迟",
+  range1h: "1 小时",
+  range6h: "6 小时",
+  range24h: "24 小时",
+  usage: "使用率",
+  total: "总计",
+  used: "已用",
+  realtime: "实时",
+  expiringSoon: "即将到期",
+  expired: "已过期",
+};
+
+const DICTS: Record<Lang, Dict> = { en, "zh-CN": zhCN };
+
+export type TKey = keyof typeof en;
+
+/** Translate `key` for `lang`, interpolating `{count}` style vars. */
+export function translate(
+  lang: Lang,
+  key: TKey,
+  vars?: Record<string, string | number>,
+): string {
+  const dict = DICTS[lang] ?? DICTS[DEFAULT_LANG];
+  let value = dict[key] ?? DICTS.en[key] ?? String(key);
+  if (vars) {
+    for (const [name, replacement] of Object.entries(vars)) {
+      value = value.replace(new RegExp(`\\{${name}\\}`, "g"), String(replacement));
+    }
+  }
+  return value;
+}
+
+/** Localised "x ago" from a whole-second delta. */
+export function relativeFromSeconds(lang: Lang, seconds: number): string {
+  if (!Number.isFinite(seconds)) return "—";
+  if (seconds < 5) return translate(lang, "justNow");
+  if (seconds < 60) return translate(lang, "secondsAgo", { count: seconds });
+  if (seconds < 3600)
+    return translate(lang, "minutesAgo", { count: Math.floor(seconds / 60) });
+  if (seconds < 86400)
+    return translate(lang, "hoursAgo", { count: Math.floor(seconds / 3600) });
+  return translate(lang, "daysAgo", { count: Math.floor(seconds / 86400) });
+}
