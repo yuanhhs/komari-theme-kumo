@@ -1,132 +1,153 @@
 # Kumo for Komari
 
-A clean, responsive monitoring theme for [Komari](https://github.com/komari-monitor/komari), built with
-**Next.js** and **[Cloudflare Kumo](https://kumo-ui.com)** — Cloudflare's React design system
-(Base UI + Tailwind CSS v4).
+[![Build theme](https://github.com/yuanhhs/komari-theme-kumo/actions/workflows/build.yml/badge.svg)](https://github.com/yuanhhs/komari-theme-kumo/actions/workflows/build.yml)
 
-It renders your fleet live from the Komari **JSON-RPC2** API: a stats overview, a grid/list of
-node cards with real-time CPU / memory / disk / network, and a per-node detail view with
-historical load, network, and ping charts.
+一款简洁、响应式的 [Komari](https://github.com/komari-monitor/komari) 监控主题，基于
+**Next.js** 与 **[Cloudflare Kumo](https://kumo-ui.com)**（Cloudflare 的 React 设计系统，
+Base UI + Tailwind CSS v4）构建。
 
-![Preview](.preview/preview.png)
+它通过 Komari 的 **JSON-RPC2** 接口实时渲染你的服务器集群：顶部统计概览、网格 / 列表形式的
+节点卡片（实时 CPU / 内存 / 磁盘 / 网络），以及每个节点的详情视图（负载、网络、延迟历史图表）。
 
-## Features
+![预览](.preview/preview.png)
 
-- **Live data** — polls `common:getNodesLatestStatus` for real-time CPU/RAM/disk/network/uptime.
-- **Two layouts** — responsive card **grid** and compact **list**, with search and group filtering.
-- **Node detail** — modal with CPU/RAM and network history (ECharts) + ping latency, range
-  selector (1h / 6h / 24h), and full system/billing info.
-- **Theming** — light / dark / system, six accent colors, all via Kumo semantic tokens (automatic
-  dark mode through `light-dark()`).
-- **i18n** — 简体中文 + English, auto-detected, switchable.
-- **Admin-configurable** — ships a Komari `managed` configuration (default appearance/view/accent,
-  offline ordering, group filter, logo, background, footer note).
+## 功能特性
 
-## Tech stack
+- **实时数据** —— 轮询 `common:getNodesLatestStatus`，实时展示 CPU / 内存 / 交换 / 磁盘 / 网络 / 在线时长。
+- **两种布局** —— 响应式卡片**网格**与紧凑**列表**，支持搜索与分组筛选；网格每行可选 **4 / 5 列**。
+- **节点卡片** —— 操作系统发行版图标 + 国家/地区国旗；底部三个**环形仪表**：↑ 上行、↓ 下行、到期倒计时
+  （按计费周期填充，临近到期变琥珀/红色）。
+- **磨砂样式** —— 可切换的毛玻璃卡片（半透明 + 背景模糊），配合自定义背景效果更佳。
+- **节点详情** —— 弹窗内含 CPU/内存、网络历史（ECharts）与延迟图表，时间范围可选（1h / 6h / 24h），
+  以及完整的系统/账单信息；**无数据的指标（如温度）自动隐藏，不再显示占位符**。
+- **主题外观** —— 浅色 / 深色 / 跟随系统，六种强调色，全部基于 Kumo 语义化 token
+  （通过 `light-dark()` 自动暗色）。
+- **自定义背景** —— 访客可上传本地图片作背景（自动压缩为 WebP 存入 `localStorage`），覆盖管理员设置的默认背景。
+- **国际化** —— 简体中文 + English，自动识别、可切换。
+- **管理员可配置** —— 内置 Komari `managed` 配置（默认外观/视图/列数/卡片样式/强调色、离线排序、
+  分组筛选、Logo、背景图、页脚备注）。
 
-| Concern        | Choice |
-| -------------- | ------ |
-| Framework      | Next.js 15 (App Router, static export → SPA) |
-| UI             | `@cloudflare/kumo` + `@phosphor-icons/react` |
-| Styling        | Tailwind CSS v4 (kumo semantic tokens only) |
-| Charts         | ECharts (tree-shaken core) |
-| Data fetching  | SWR (polling) over a typed JSON-RPC2 client |
+## 技术栈
 
-## Requirements
+| 方面     | 选型 |
+| -------- | ---- |
+| 框架     | Next.js 15（App Router，静态导出 → SPA） |
+| UI       | `@cloudflare/kumo` + `@phosphor-icons/react` |
+| 样式     | Tailwind CSS v4（仅用 kumo 语义化 token） |
+| 图表     | ECharts（按需引入核心） |
+| 图标     | `simple-icons`（系统发行版 Logo）+ flagcdn（国旗） |
+| 数据获取 | SWR 轮询 + 带类型的 JSON-RPC2 客户端 |
 
-- A Komari server **≥ 1.0.7** (RPC2 endpoint). Managed theme settings need the server **≥ 1.0.5**.
-- Node **≥ 20** for development.
+## 环境要求
 
-## Development
+- 一台 Komari 服务端 **≥ 1.0.7**（提供 RPC2 接口）；`managed` 主题设置需要服务端 **≥ 1.0.5**。
+- 本地开发需要 Node **≥ 20**。
+
+## 本地开发
 
 ```bash
 npm install
 npm run dev          # http://localhost:3000
 ```
 
-The frontend always calls a **relative** `/api/rpc2`. In development a small route handler
-(`app/api/rpc2/route.ts`) proxies that to a live Komari instance and rewrites the `Origin` header
-(the live server enforces an origin allowlist, so a raw localhost request is rejected with 403).
+前端始终请求**相对路径** `/api/rpc2`。开发环境下有一个小的路由处理器
+（`app/api/rpc2/route.ts`）把它代理到线上的 Komari 实例，并改写 `Origin` 请求头
+（线上服务端启用了来源白名单，直接用 localhost 请求会被 403 拒绝）。
 
-Point dev at your own instance:
+指向你自己的实例：
 
 ```bash
 KOMARI_DEV_TARGET=https://your-komari.example.com npm run dev
 ```
 
-(The default target lives in `app/api/rpc2/route.ts`.)
+（默认目标地址写在 `app/api/rpc2/route.ts` 里。）
 
-## Build the theme package
+## 打包主题
 
 ```bash
 npm run build:theme
 ```
 
-This produces **`komari-theme-kumo.zip`**. The script:
+会生成 **`komari-theme-kumo.zip`**。脚本流程：
 
-1. stashes the dev-only route handler (route handlers can't be statically exported),
-2. runs `BUILD_EXPORT=true next build` (static export → `out/`),
-3. verifies the required `<title>Komari Monitor</title>` / description placeholders survived,
-4. assembles `theme/` (`komari-theme.json` + `dist/` + `preview.png`) and zips it.
+1. 暂存仅开发用的路由处理器（路由处理器无法静态导出）；
+2. 执行 `BUILD_EXPORT=true next build`（静态导出 → `out/`）；
+3. 校验必需的 `<title>Komari Monitor</title>` / 描述占位符是否保留；
+4. 组装 `theme/`（`komari-theme.json` + `dist/` + `preview.png`）并压缩为 zip。
 
-## Install into Komari
+## 安装到 Komari
 
-1. Open the Komari **admin panel → 主题 / Themes**.
-2. Upload `komari-theme-kumo.zip`.
-3. Activate **Kumo**.
+1. 打开 Komari **管理后台 → 主题 / Themes**。
+2. 上传 `komari-theme-kumo.zip`。
+3. 启用 **Kumo**。
 
-In production the theme is served by Komari at the site root, so `/api/rpc2` is same-origin — no
-proxy needed.
+生产环境下主题由 Komari 部署在站点根目录，`/api/rpc2` 是同源请求，无需代理。
 
-## Theme settings (admin panel)
+## 持续集成与发布
 
-Exposed via the `managed` configuration in `theme.manifest.json` and read back from
-`/api/public`'s `theme_settings`:
+仓库已配置 GitHub Actions（`.github/workflows/build.yml`）：
 
-| Key | Type | Default | Purpose |
+- **每次更新自动构建**：推送到 `main`、PR 或手动触发时，自动跑 `npm ci` → 类型检查 →
+  `npm run build:theme`，并把打好的 `komari-theme-kumo.zip` 作为构建产物（artifact）上传。
+- **打标签自动发版**：推送 `vX.Y.Z` 形式的标签时，自动创建 GitHub Release 并附上 zip。
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0      # 触发构建并发布带 zip 的 Release
+```
+
+## 主题设置（管理后台）
+
+通过 `theme.manifest.json` 中的 `managed` 配置暴露，并从 `/api/public` 的 `theme_settings` 读回：
+
+| 键 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `defaultAppearance` | select | `system` | First-visit light/dark mode |
-| `defaultView` | select | `grid` | First-visit layout |
-| `defaultAccent` | select | `default` | Accent color |
-| `showOfflineLast` | switch | `true` | Sort offline nodes to the end |
-| `enableGroupTabs` | switch | `true` | Show the group filter |
-| `logoUrl` | string | — | Header logo (empty = built-in cloud mark) |
-| `backgroundUrl` | string | — | Page background image |
-| `footerNote` | richtext | — | HTML shown above the Powered-by line |
+| `defaultAppearance` | select | `system` | 首次访问的浅色/深色模式 |
+| `defaultView` | select | `grid` | 首次访问的布局 |
+| `defaultColumns` | select | `4` | 网格视图宽屏下每行列数（4 / 5） |
+| `cardStyle` | select | `solid` | 卡片样式：实心 / 磨砂 |
+| `defaultAccent` | select | `default` | 强调色 |
+| `showOfflineLast` | switch | `true` | 离线节点排到最后 |
+| `enableGroupTabs` | switch | `true` | 显示分组筛选 |
+| `logoUrl` | string | — | 头部 Logo（留空使用内置云朵图标） |
+| `backgroundUrl` | string | — | 页面背景图 |
+| `footerNote` | richtext | — | 显示在 Powered-by 上方的 HTML |
 
-Visitor preferences (appearance, language, view, accent) are stored in `localStorage`
-(`appearance`, `language`, `kumo-view`, `kumo-accent`) and take precedence over admin defaults.
+访客偏好（外观、语言、视图、列数、卡片样式、强调色、自定义背景）存储在 `localStorage`
+（`appearance`、`language`、`kumo-view`、`kumo-cols`、`kumo-surface`、`kumo-accent`、`kumo-bg`），
+优先级高于管理员默认值。
 
-## Project layout
+## 项目结构
 
 ```
-app/                 App Router: layout (title/description placeholders), page, globals.css
-  api/rpc2/route.ts  DEV-ONLY proxy (removed from the static export)
+app/                 App Router：layout（标题/描述占位符）、page、globals.css
+  api/rpc2/route.ts  仅开发用的代理（静态导出时移除）
   icon.svg           Favicon
 lib/
-  rpc2.ts            Typed JSON-RPC2 client (POST /api/rpc2)
-  types.ts           API response types
-  aggregate.ts       Node view-model + stats + grouping (pure)
-  format.ts          Bytes / speed / uptime / percent formatters
-  i18n.ts            zh-CN + en dictionary
-  theme-settings.ts  Parses theme_settings
-hooks/useKomari.ts   SWR hooks (live polling)
-components/          dashboard, node-card, node-list, node-detail-dialog,
-                     site-header, settings-dialog, stats-bar, toolbar, charts/, ui/
-scripts/package-theme.mjs   Static export + zip packaging
-theme.manifest.json  komari-theme.json source (version injected from package.json)
+  rpc2.ts            带类型的 JSON-RPC2 客户端（POST /api/rpc2）
+  types.ts           接口响应类型
+  aggregate.ts       节点视图模型 + 统计 + 分组（纯函数）
+  format.ts          字节 / 速率 / 在线时长 / 百分比 等格式化
+  i18n.ts            zh-CN + en 词典
+  image.ts           背景图上传压缩（→ WebP data URL）
+  theme-settings.ts  解析 theme_settings
+hooks/useKomari.ts   SWR hooks（实时轮询）
+components/          dashboard、node-card、node-list、node-detail-dialog、
+                     site-header、settings-dialog、stats-bar、toolbar、charts/、ui/
+scripts/package-theme.mjs   静态导出 + zip 打包
+theme.manifest.json  komari-theme.json 源文件（版本号从 package.json 注入）
 ```
 
-## Design notes
+## 设计说明
 
-- **Kumo tokens only** for color (`bg-kumo-*`, `text-kumo-*`, …); never raw Tailwind colors or
-  `dark:` variants — dark mode is automatic.
-- **Single-page** by design: the node detail is a dialog (not a route), so the static export stays a
-  clean SPA that plays well with Komari's index.html fallback.
-- `<title>Komari Monitor</title>` and `A simple server monitor tool.` are kept verbatim so Komari can
-  substitute the operator's custom site title/description at serve time.
-- The `Powered by Komari Monitor.` footer is retained as required by the theme guidelines.
+- 颜色**只用 Kumo token**（`bg-kumo-*`、`text-kumo-*`……），绝不使用原始 Tailwind 颜色或
+  `dark:` 变体 —— 暗色模式是自动的。
+- **单页**设计：节点详情是弹窗而非路由，因此静态导出保持为干净的 SPA，与 Komari 的
+  index.html 回退机制兼容良好。
+- `<title>Komari Monitor</title>` 与 `A simple server monitor tool.` 原样保留，以便 Komari
+  在服务时替换为运营者自定义的站点标题/描述。
+- 按主题规范要求，保留 `Powered by Komari Monitor.` 页脚。
 
-## License
+## 许可证
 
 MIT
