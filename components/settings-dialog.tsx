@@ -23,7 +23,6 @@ import {
   type Surface,
   type ViewMode,
 } from "@/components/providers";
-import { fileToBackgroundDataUrl } from "@/lib/image";
 import type { Lang } from "@/lib/i18n";
 import type { ReactNode } from "react";
 
@@ -69,7 +68,9 @@ export function SettingsDialog({
     surface,
     setSurface,
     background,
-    setBackground,
+    backgroundType,
+    setBackgroundFile,
+    clearBackground,
   } = useSettings();
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -151,15 +152,15 @@ export function SettingsDialog({
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 try {
-                  setBackground(await fileToBackgroundDataUrl(file));
+                  await setBackgroundFile(file);
                 } catch {
-                  /* ignore unreadable images */
+                  /* ignore unreadable / oversized files */
                 }
                 if (fileRef.current) fileRef.current.value = "";
               }}
@@ -167,18 +168,30 @@ export function SettingsDialog({
             <div className="flex items-center gap-3">
               <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
                 <ImageIcon size={15} />
-                {t("uploadImage")}
+                {t("uploadMedia")}
               </Button>
               {background ? (
                 <>
-                  <span
-                    aria-hidden
-                    className="border-kumo-hairline h-9 w-14 shrink-0 rounded-md border bg-cover bg-center"
-                    style={{ backgroundImage: `url("${background}")` }}
-                  />
+                  {backgroundType === "video" ? (
+                    <video
+                      aria-hidden
+                      className="border-kumo-hairline h-9 w-14 shrink-0 rounded-md border object-cover"
+                      src={background}
+                      muted
+                      loop
+                      autoPlay
+                      playsInline
+                    />
+                  ) : (
+                    <span
+                      aria-hidden
+                      className="border-kumo-hairline h-9 w-14 shrink-0 rounded-md border bg-cover bg-center"
+                      style={{ backgroundImage: `url("${background}")` }}
+                    />
+                  )}
                   <button
                     type="button"
-                    onClick={() => setBackground("")}
+                    onClick={() => clearBackground()}
                     className="text-kumo-subtle hover:text-kumo-danger inline-flex items-center gap-1 text-xs transition-colors"
                   >
                     <TrashIcon size={14} />

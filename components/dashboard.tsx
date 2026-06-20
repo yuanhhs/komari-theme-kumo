@@ -53,13 +53,14 @@ function CenteredState({
 }
 
 export function Dashboard() {
-  const { t, view, columns, background, seedDefaults } = useSettings();
+  const { t, view, columns, background, backgroundType, seedDefaults } = useSettings();
   const { views, isLoading, error, lastUpdated, refresh } = useDashboard();
   const { data: info } = usePublicInfo();
   const { data: version } = useVersion();
 
   const options = useMemo(() => parseThemeOptions(info), [info]);
   const bgUrl = background || options.backgroundUrl;
+  const bgIsVideo = !!background && backgroundType === "video";
 
   const [search, setSearch] = useState("");
   const [group, setGroup] = useState("all");
@@ -116,11 +117,23 @@ export function Dashboard() {
   return (
     <div className="relative min-h-screen">
       {bgUrl ? (
-        <div
-          aria-hidden
-          className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url("${bgUrl}")` }}
-        />
+        bgIsVideo ? (
+          <video
+            aria-hidden
+            className="pointer-events-none fixed inset-0 -z-10 h-full w-full object-cover"
+            src={bgUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
+        ) : (
+          <div
+            aria-hidden
+            className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url("${bgUrl}")` }}
+          />
+        )
       ) : null}
 
       <SiteHeader

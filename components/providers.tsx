@@ -17,6 +17,11 @@ import {
   type Lang,
   type TKey,
 } from "@/lib/i18n";
+import {
+  loadBackgroundBlob,
+  saveBackgroundBlob,
+  clearBackgroundBlob,
+} from "@/lib/bg-store";
 
 export type Appearance = "light" | "dark" | "system";
 export type Mode = "light" | "dark";
@@ -26,6 +31,8 @@ export type Accent = "default" | "blue" | "violet" | "emerald" | "rose" | "cyan"
 export type Columns = 4 | 5;
 /** Card surface style: opaque or frosted glass (translucent + backdrop-blur). */
 export type Surface = "solid" | "glass";
+/** Kind of the custom background media. */
+export type BackgroundKind = "image" | "video";
 
 /** Accent overrides for `--color-kumo-brand`; `light-dark()` keeps both modes correct. */
 const ACCENTS: Record<Exclude<Accent, "default">, { brand: string; hover: string }> = {
@@ -67,7 +74,6 @@ const LS = {
   accent: "kumo-accent",
   columns: "kumo-cols",
   surface: "kumo-surface",
-  background: "kumo-bg",
 } as const;
 
 function readLS(key: string): string | null {
@@ -102,9 +108,14 @@ interface SettingsContextValue {
   setColumns: (c: Columns) => void;
   surface: Surface;
   setSurface: (s: Surface) => void;
-  /** Visitor-uploaded background (data URL); overrides the admin default locally. */
+  /** Visitor background as an object URL (image or video); overrides the admin default locally. Empty when none. */
   background: string;
-  setBackground: (url: string) => void;
+  /** Kind of the visitor background, for choosing <img>/<video> rendering. */
+  backgroundType: "" | BackgroundKind;
+  /** Store an uploaded image/video file as the background (persisted in IndexedDB). */
+  setBackgroundFile: (file: File) => Promise<void>;
+  /** Remove the visitor background. */
+  clearBackground: () => void;
   /** Apply admin-provided defaults for any pref the user has not set. */
   seedDefaults: (d: {
     appearance?: Appearance;
@@ -127,6 +138,7 @@ export function Providers({ children }: { children: ReactNode }) {
   const [columns, setColumnsState] = useState<Columns>(4);
   const [surface, setSurfaceState] = useState<Surface>("solid");
   const [background, setBackgroundState] = useState<string>("");
+  const [backgroundType, setBackgroundType] = useState<"" | BackgroundKind>("");
   const [systemDark, setSystemDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -144,9 +156,21 @@ export function Providers({ children }: { children: ReactNode }) {
     if (c === "4" || c === "5") setColumnsState(Number(c) as Columns);
     const sf = readLS(LS.surface);
     if (sf === "solid" || sf === "glass") setSurfaceState(sf);
-    const bg = readLS(LS.background);
-    if (bg) setBackgroundState(bg);
     setMounted(true);
+  }, []);
+
+  // Load the persisted custom background (image/video blob) from IndexedDB.
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    loadBackgroundBlob().then((blob) => {
+      if (!blob) return;
+      objectUrl = URL.createObjectURL(blob);
+      setBackgroundState(objectUrl);
+      setBackgroundType(blob.type.startsWith("video") ? "video" : "image");
+    });
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, []);
 
   // Track the system color-scheme preference.
@@ -213,17 +237,22 @@ export function Providers({ children }: { children: ReactNode }) {
     setSurfaceState(s);
     writeLS(LS.surface, s);
   }, []);
-  const setBackground = useCallback((url: string) => {
-    setBackgroundState(url);
-    if (url) {
-      writeLS(LS.background, url);
-    } else {
-      try {
-        localStorage.removeItem(LS.background);
-      } catch {
-        /* storage may be unavailable */
-      }
-    }
+  const setBackgroundFile = useCallback(async (file: File) => {
+    await saveBackgroundBlob(file);
+    const url = URL.createObjectURL(file);
+    setBackgroundState((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return url;
+    });
+    setBackgroundType(file.type.startsWith("video") ? "video" : "image");
+  }, []);
+  const clearBackground = useCallback(() => {
+    void clearBackgroundBlob();
+    setBackgroundState((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return "";
+    });
+    setBackgroundType("");
   }, []);
 
   const seedDefaults = useCallback(
@@ -265,12 +294,14 @@ export function Providers({ children }: { children: ReactNode }) {
       surface,
       setSurface,
       background,
-      setBackground,
+      backgroundType,
+      setBackgroundFile,
+      clearBackground,
       seedDefaults,
       t,
       mounted,
     }),
-    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, background, setBackground, seedDefaults, t, mounted],
+    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, background, backgroundType, setBackgroundFile, clearBackground, seedDefaults, t, mounted],
   );
 
   return (
