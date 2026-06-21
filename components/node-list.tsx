@@ -37,7 +37,7 @@ function NodeRow({
   onOpen,
 }: {
   view: NodeView;
-  onOpen: (uuid: string) => void;
+  onOpen: (uuid: string, origin?: DOMRect) => void;
 }) {
   const { t } = useSettings();
   const { node, status, online } = view;
@@ -45,17 +45,17 @@ function NodeRow({
   const diskPct = ratioPercent(status?.disk ?? 0, status?.disk_total || node.disk_total);
   const swapTotal = status?.swap_total ?? node.swap_total ?? 0;
   const swapPct = ratioPercent(status?.swap ?? 0, swapTotal);
-  const open = () => onOpen(node.uuid);
+  const open = (element: HTMLElement) => onOpen(node.uuid, element.getBoundingClientRect());
 
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={open}
+      onClick={(e) => open(e.currentTarget)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          open();
+          open(e.currentTarget);
         }
       }}
       className={cn(
@@ -130,7 +130,7 @@ export function NodeList({
   onOpen,
 }: {
   views: NodeView[];
-  onOpen: (uuid: string) => void;
+  onOpen: (uuid: string, origin?: DOMRect) => void;
 }) {
   return (
     <Card

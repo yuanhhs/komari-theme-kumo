@@ -189,6 +189,10 @@ export function Providers({ children }: { children: ReactNode }) {
   // Load the persisted custom background (image/video blob) from IndexedDB.
   useEffect(() => {
     let objectUrl: string | null = null;
+    const imageUrl = readLS(LS.backgroundImageUrl)?.trim() ?? "";
+    const videoUrl = readLS(LS.backgroundVideoUrl)?.trim() ?? "";
+    if (isSafeResourceUrl(videoUrl) || isSafeResourceUrl(imageUrl)) return;
+
     loadBackgroundBlob().then((blob) => {
       if (!blob) return;
       objectUrl = URL.createObjectURL(blob);

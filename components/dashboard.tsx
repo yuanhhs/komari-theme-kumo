@@ -71,6 +71,7 @@ export function Dashboard() {
   const [group, setGroup] = useState("all");
   const [selected, setSelected] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [detailOrigin, setDetailOrigin] = useState<DOMRect | null>(null);
 
   const seeded = useRef(false);
   useEffect(() => {
@@ -111,7 +112,8 @@ export function Dashboard() {
     [views, selected],
   );
 
-  const openDetail = (uuid: string) => {
+  const openDetail = (uuid: string, origin?: DOMRect) => {
+    setDetailOrigin(origin ?? null);
     setSelected(uuid);
     setDetailOpen(true);
   };
@@ -225,6 +227,7 @@ export function Dashboard() {
       <NodeDetailDialog
         view={selectedView}
         open={detailOpen}
+        origin={detailOrigin}
         onOpenChange={setDetailOpen}
       />
     </div>

@@ -63,7 +63,7 @@ export function NodeCard({
   onOpen,
 }: {
   view: NodeView;
-  onOpen: (uuid: string) => void;
+  onOpen: (uuid: string, origin?: DOMRect) => void;
 }) {
   const { t, lang, mode } = useSettings();
   const colors = chartColors(mode);
@@ -96,18 +96,18 @@ export function NodeCard({
       ? t("expired")
       : t("days", { count: daysLeft });
 
-  const open = () => onOpen(node.uuid);
+  const open = (element: HTMLElement) => onOpen(node.uuid, element.getBoundingClientRect());
 
   return (
     <Card
       variant="raised"
       role="button"
       tabIndex={0}
-      onClick={open}
+      onClick={(e) => open(e.currentTarget)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          open();
+          open(e.currentTarget);
         }
       }}
       className={cn(
