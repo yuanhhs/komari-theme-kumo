@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Dialog, Badge } from "@cloudflare/kumo";
 import { XIcon, GlobeIcon } from "@phosphor-icons/react";
 import { RegionGlobe, type GlobeMarker } from "@/components/region-globe";
@@ -25,6 +25,17 @@ export function RegionDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { t, lang } = useSettings();
+  const [shouldRenderGlobe, setShouldRenderGlobe] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setShouldRenderGlobe(true);
+    } else {
+      // Delay unmount to let dialog animation finish
+      const timer = setTimeout(() => setShouldRenderGlobe(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   const regions = useMemo<RegionEntry[]>(() => {
     const map = new Map<string, RegionEntry>();
@@ -53,6 +64,10 @@ export function RegionDialog({
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [markerSig]);
+  const countryCodes = useMemo(
+    () => regions.flatMap((r) => (r.code ? [r.code] : [])),
+    [regions],
+  );
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -76,7 +91,9 @@ export function RegionDialog({
 
           <div className="overflow-y-auto px-5 py-5">
             <div className="mx-auto aspect-square w-full max-w-[340px]">
-              {open ? <RegionGlobe markers={markers} /> : null}
+              {shouldRenderGlobe ? (
+                <RegionGlobe markers={markers} countryCodes={countryCodes} />
+              ) : null}
             </div>
 
             {regions.length > 0 ? (

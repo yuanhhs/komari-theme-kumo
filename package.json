@@ -22,7 +22,9 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "simple-icons": "^16.23.0",
-    "swr": "^2.2.5"
+    "swr": "^2.2.5",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",
