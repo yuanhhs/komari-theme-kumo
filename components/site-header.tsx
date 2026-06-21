@@ -166,7 +166,7 @@ export function SiteHeader({
       </div>
 
       {loggedIn ? (
-        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} info={info} />
       ) : null}
     </header>
   );

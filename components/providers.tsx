@@ -24,9 +24,6 @@ import {
   loadLogoBlob,
   saveLogoBlob,
   clearLogoBlob,
-  loadSiteName,
-  saveSiteName,
-  clearSiteName,
 } from "@/lib/bg-store";
 import { isSafeResourceUrl } from "@/lib/sanitize";
 
@@ -90,8 +87,6 @@ const LS = {
   logoUrl: "kumo-logo-url",
 } as const;
 
-const LEGACY_SITE_NAME_KEY = "kumo-site-name";
-
 function readLS(key: string): string | null {
   if (typeof localStorage === "undefined") return null;
   try {
@@ -104,14 +99,6 @@ function readLS(key: string): string | null {
 function writeLS(key: string, value: string) {
   try {
     localStorage.setItem(key, value);
-  } catch {
-    /* storage may be unavailable (private mode, etc.) */
-  }
-}
-
-function removeLS(key: string) {
-  try {
-    localStorage.removeItem(key);
   } catch {
     /* storage may be unavailable (private mode, etc.) */
   }
@@ -153,9 +140,6 @@ interface SettingsContextValue {
   setBackgroundFile: (file: File) => Promise<void>;
   /** Remove the visitor background. */
   clearBackground: () => void;
-  /** Visitor site name override; empty falls back to the admin/server name. */
-  siteName: string;
-  setSiteName: (name: string) => void;
   /** Visitor logo as URL/object URL; overrides the admin default locally. */
   logo: string;
   logoUrl: string;
@@ -190,7 +174,6 @@ export function Providers({ children }: { children: ReactNode }) {
     useState<BackgroundBrightness>(100);
   const [backgroundImageUrl, setBackgroundImageUrlState] = useState("");
   const [backgroundVideoUrl, setBackgroundVideoUrlState] = useState("");
-  const [siteName, setSiteNameState] = useState("");
   const [logo, setLogoState] = useState("");
   const [logoUrl, setLogoUrlState] = useState("");
   const [systemDark, setSystemDark] = useState(false);
@@ -215,11 +198,9 @@ export function Providers({ children }: { children: ReactNode }) {
     setBackgroundBrightnessState(parseBackgroundBrightness(readLS(LS.backgroundBrightness)));
     const imageUrl = readLS(LS.backgroundImageUrl)?.trim() ?? "";
     const videoUrl = readLS(LS.backgroundVideoUrl)?.trim() ?? "";
-    const legacySiteName = readLS(LEGACY_SITE_NAME_KEY)?.trim() ?? "";
     const nextLogoUrl = readLS(LS.logoUrl)?.trim() ?? "";
     setBackgroundImageUrlState(imageUrl);
     setBackgroundVideoUrlState(videoUrl);
-    if (legacySiteName) setSiteNameState(legacySiteName);
     setLogoUrlState(nextLogoUrl);
     if (videoUrl && isSafeResourceUrl(videoUrl)) {
       setBackgroundState(videoUrl);
@@ -230,28 +211,6 @@ export function Providers({ children }: { children: ReactNode }) {
     }
     if (nextLogoUrl && isSafeResourceUrl(nextLogoUrl)) setLogoState(nextLogoUrl);
     setMounted(true);
-  }, []);
-
-  // Load the persisted custom site name from IndexedDB, migrating the previous
-  // localStorage value when present.
-  useEffect(() => {
-    const legacySiteName = readLS(LEGACY_SITE_NAME_KEY)?.trim() ?? "";
-
-    loadSiteName().then((name) => {
-      const next = name?.trim() ?? "";
-      if (next) {
-        setSiteNameState(next);
-        removeLS(LEGACY_SITE_NAME_KEY);
-        return;
-      }
-      if (legacySiteName) {
-        setSiteNameState(legacySiteName);
-        void saveSiteName(legacySiteName).then(
-          () => removeLS(LEGACY_SITE_NAME_KEY),
-          () => undefined,
-        );
-      }
-    });
   }, []);
 
   // Load the persisted custom background (image/video blob) from IndexedDB.
@@ -431,14 +390,6 @@ export function Providers({ children }: { children: ReactNode }) {
     });
     setBackgroundType("");
   }, []);
-  const setSiteName = useCallback((name: string) => {
-    const next = name.trim();
-    setSiteNameState(next);
-    void (next ? saveSiteName(next) : clearSiteName()).then(
-      () => removeLS(LEGACY_SITE_NAME_KEY),
-      () => writeLS(LEGACY_SITE_NAME_KEY, next),
-    );
-  }, []);
   const setLogoFile = useCallback(async (blob: Blob) => {
     await saveLogoBlob(blob);
     setLogoUrlState("");
@@ -509,8 +460,6 @@ export function Providers({ children }: { children: ReactNode }) {
       setBackgroundVideoUrl,
       setBackgroundFile,
       clearBackground,
-      siteName,
-      setSiteName,
       logo,
       logoUrl,
       setLogoUrl,
@@ -520,7 +469,7 @@ export function Providers({ children }: { children: ReactNode }) {
       t,
       mounted,
     }),
-    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundType, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, setBackgroundFile, clearBackground, siteName, setSiteName, logo, logoUrl, setLogoUrl, setLogoFile, clearLogo, seedDefaults, t, mounted],
+    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundType, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, setBackgroundFile, clearBackground, logo, logoUrl, setLogoUrl, setLogoFile, clearLogo, seedDefaults, t, mounted],
   );
 
   return (

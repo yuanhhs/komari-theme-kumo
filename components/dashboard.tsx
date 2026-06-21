@@ -62,7 +62,6 @@ export function Dashboard() {
     background,
     backgroundType,
     backgroundBrightness,
-    siteName,
     logo,
     seedDefaults,
   } = useSettings();
@@ -112,8 +111,11 @@ export function Dashboard() {
           .includes(q),
       );
     }
+    if (options.showOfflineLast) {
+      list = [...list].sort((a, b) => Number(b.online) - Number(a.online));
+    }
     return list;
-  }, [views, group, search]);
+  }, [views, group, search, options.showOfflineLast]);
 
   const selectedView = useMemo(
     () => views.find((v) => v.node.uuid === selected) ?? null,
@@ -158,7 +160,7 @@ export function Dashboard() {
       <SiteHeader
         info={info}
         version={version}
-        siteName={siteName || options.siteName}
+        siteName={options.siteName}
         logoUrl={logo || options.logoUrl}
         lastUpdated={lastUpdated}
         search={search}
