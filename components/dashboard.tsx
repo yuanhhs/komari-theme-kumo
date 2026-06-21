@@ -62,6 +62,7 @@ export function Dashboard() {
     background,
     backgroundType,
     backgroundBrightness,
+    siteName,
     logo,
     seedDefaults,
   } = useSettings();
@@ -157,6 +158,7 @@ export function Dashboard() {
       <SiteHeader
         info={info}
         version={version}
+        siteName={siteName || options.siteName}
         logoUrl={logo || options.logoUrl}
         lastUpdated={lastUpdated}
         search={search}

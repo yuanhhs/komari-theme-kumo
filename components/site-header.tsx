@@ -21,6 +21,7 @@ import type { PublicInfo, VersionInfo } from "@/lib/types";
 export function SiteHeader({
   info,
   version,
+  siteName,
   logoUrl,
   lastUpdated,
   search,
@@ -28,6 +29,7 @@ export function SiteHeader({
 }: {
   info?: PublicInfo;
   version?: VersionInfo;
+  siteName?: string;
   logoUrl?: string;
   lastUpdated?: string;
   search: string;
@@ -42,7 +44,7 @@ export function SiteHeader({
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const sitename = info?.sitename || "Komari";
+  const sitename = siteName?.trim() || info?.sitename || "Komari";
   const toggleMode = () => setAppearance(mode === "dark" ? "light" : "dark");
   const showLogo = logoUrl && !logoError;
 

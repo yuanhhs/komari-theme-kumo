@@ -62,6 +62,13 @@
         "name": { "zh-CN": "显示分组筛选", "en": "Show group filter" }
       },
       {
+        "key": "siteName",
+        "type": "string",
+        "default": "",
+        "name": { "zh-CN": "站点名称", "en": "Site name" },
+        "help": { "zh-CN": "留空使用 Komari 后端站点名称", "en": "Leave empty to use the Komari server site name" }
+      },
+      {
         "key": "logoUrl",
         "type": "string",
         "default": "",

@@ -22,6 +22,7 @@ Base UI + Tailwind CSS v4）构建。
   以及完整的系统/账单信息；**无数据的指标（如温度）自动隐藏，不再显示占位符**。
 - **主题外观** —— 浅色 / 深色 / 跟随系统，六种强调色，全部基于 Kumo 语义化 token
   （通过 `light-dark()` 自动暗色）。
+- **自定义站点信息** —— 支持自定义站点名称、Logo 与背景，访客本地设置优先于管理员默认值。
 - **自定义背景** —— 访客可上传本地图片作背景（自动压缩为 WebP 存入 `localStorage`），覆盖管理员设置的默认背景。
 - **国际化** —— 简体中文 + English，自动识别、可切换。
 - **管理员可配置** —— 内置 Komari `managed` 配置（默认外观/视图/列数/卡片样式/强调色、离线排序、
@@ -109,8 +110,9 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 | `defaultColumns` | select | `4` | 网格视图宽屏下每行列数（4 / 5） |
 | `cardStyle` | select | `solid` | 卡片样式：实心 / 磨砂 |
 | `defaultAccent` | select | `default` | 强调色 |
-| `showOfflineLast` | switch | `true` | 离线节点排到最后 |
+| `showOfflineLast` | switch | `false` | 离线节点排到最后 |
 | `enableGroupTabs` | switch | `true` | 显示分组筛选 |
+| `siteName` | string | — | 头部站点名称（留空使用 Komari 后端站点名称） |
 | `logoUrl` | string | — | 头部 Logo（留空使用内置云朵图标） |
 | `backgroundUrl` | string | — | 页面背景图 |
 | `footerNote` | richtext | — | 显示在 Powered-by 上方的 HTML |
@@ -118,9 +120,8 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 本地静态图片默认放在 `public/assets/`，在设置里使用 `/assets/文件名` 作为 Logo 或背景路径；
 打包后该目录会保留为主题包内的 `dist/assets/`。
 
-访客偏好（外观、语言、视图、列数、卡片样式、强调色、自定义背景）存储在 `localStorage`
-（`appearance`、`language`、`kumo-view`、`kumo-cols`、`kumo-surface`、`kumo-accent`、`kumo-bg`），
-优先级高于管理员默认值。
+访客偏好优先级高于管理员默认值。外观、语言、视图、列数、卡片样式、强调色等轻量设置存储在
+`localStorage`；自定义站点名称、Logo 与背景媒体存储在 IndexedDB 的 `kumo-theme` 数据库中。
 
 ## 项目结构
 

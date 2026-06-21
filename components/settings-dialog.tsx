@@ -82,6 +82,8 @@ export function SettingsDialog({
     setBackgroundVideoUrl,
     setBackgroundFile,
     clearBackground,
+    siteName,
+    setSiteName,
     logo,
     logoUrl,
     setLogoUrl,
@@ -175,6 +177,16 @@ export function SettingsDialog({
                 { value: "show", label: t("show") },
                 { value: "hide", label: t("hide") },
               ]}
+            />
+          </Section>
+
+          <Section label={t("siteName")}>
+            <input
+              value={siteName}
+              onChange={(e) => setSiteName(e.target.value)}
+              placeholder={t("siteNamePlaceholder")}
+              aria-label={t("siteName")}
+              className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
             />
           </Section>
 
