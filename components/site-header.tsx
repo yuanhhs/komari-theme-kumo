@@ -6,7 +6,6 @@ import {
   GearIcon,
   SunIcon,
   MoonIcon,
-  CloudIcon,
   SignInIcon,
   MagnifyingGlassIcon,
   XIcon,
@@ -56,10 +55,7 @@ export function SiteHeader({
   return (
     <header className="border-kumo-hairline bg-kumo-canvas/80 sticky top-0 z-30 border-b backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[var(--app-max-width,1400px)] items-center justify-between gap-3 px-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="bg-kumo-brand flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-            <CloudIcon size={20} weight="fill" className="text-white" />
-          </div>
+        <div className="flex min-w-0 items-center">
           <div className="min-w-0">
             <h1 className="text-kumo-default truncate text-base leading-tight font-semibold">
               {sitename}
