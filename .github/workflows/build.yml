@@ -1,11 +1,11 @@
 name: Build theme
 
-# Auto-build on every update. Main pushes publish numbered releases;
-# version tags publish immutable manually named releases.
+# Auto-build on every update. Main pushes publish numbered releases.
+# The version advances as 1.0.14 -> 1.0.15 -> 1.1.0 -> ... -> 1.15.15 -> 2.0.0.
 on:
   push:
     branches: [main]
-    tags: ["v*"]
+    tags: ["*.*.*", "v*.*.*"]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -21,9 +21,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      theme-version: ${{ steps.version.outputs.version }}
+      theme-tag: ${{ steps.version.outputs.tag }}
+      should-release: ${{ steps.version.outputs.should_release }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -37,7 +43,13 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      - name: Resolve theme version
+        id: version
+        run: node scripts/resolve-ci-version.mjs >> "$GITHUB_OUTPUT"
+
       - name: Build theme package
+        env:
+          THEME_VERSION: ${{ steps.version.outputs.version }}
         run: npm run build:theme
 
       - name: Upload theme zip
@@ -49,7 +61,7 @@ jobs:
 
   auto-release:
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build.outputs.should-release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -65,35 +77,34 @@ jobs:
       - name: Publish numbered release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.build.outputs.theme-tag }}
+          THEME_VERSION: ${{ needs.build.outputs.theme-version }}
         run: |
-          BASE_VERSION="$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')")"
-          TAG="v${BASE_VERSION}.${GITHUB_RUN_NUMBER}"
-
-          gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TAG}" \
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}" \
             --method PATCH \
             --field "sha=${GITHUB_SHA}" \
             --field "force=true" \
           || gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
             --method POST \
-            --field "ref=refs/tags/${TAG}" \
+            --field "ref=refs/tags/${RELEASE_TAG}" \
             --field "sha=${GITHUB_SHA}"
 
-          gh release create "${TAG}" komari-theme-kumo.zip \
+          gh release create "${RELEASE_TAG}" komari-theme-kumo.zip \
             --repo "$GITHUB_REPOSITORY" \
-            --title "${TAG}" \
-            --notes "Automated build from ${GITHUB_SHA}." \
+            --title "${RELEASE_TAG}" \
+            --notes "Automated build ${THEME_VERSION} from ${GITHUB_SHA}." \
             --target "$GITHUB_SHA" \
           || {
-            gh release edit "${TAG}" \
+            gh release edit "${RELEASE_TAG}" \
               --repo "$GITHUB_REPOSITORY" \
-              --title "${TAG}" \
-              --notes "Automated build from ${GITHUB_SHA}."
-            gh release upload "${TAG}" komari-theme-kumo.zip --repo "$GITHUB_REPOSITORY" --clobber
+              --title "${RELEASE_TAG}" \
+              --notes "Automated build ${THEME_VERSION} from ${GITHUB_SHA}."
+            gh release upload "${RELEASE_TAG}" komari-theme-kumo.zip --repo "$GITHUB_REPOSITORY" --clobber
           }
 
   version-release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && needs.build.outputs.should-release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write

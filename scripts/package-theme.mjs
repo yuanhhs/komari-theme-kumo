@@ -38,7 +38,7 @@ const log = (msg) => console.log(`[package-theme] ${msg}`);
 // 1. Manifest (version comes from package.json so there's a single source of truth)
 const manifest = JSON.parse(readFileSync(p("theme.manifest.json"), "utf8"));
 const pkg = JSON.parse(readFileSync(p("package.json"), "utf8"));
-manifest.version = pkg.version;
+manifest.version = process.env.THEME_VERSION || pkg.version;
 
 // 2. Stash the dev-only route handler (incompatible with output: export).
 //    We stash by content rather than renaming the dir to avoid Windows
