@@ -73,16 +73,18 @@ jobs:
             --field "sha=${GITHUB_SHA}"
 
           gh release create latest komari-theme-kumo.zip \
+            --repo "$GITHUB_REPOSITORY" \
             --title "Latest build" \
             --notes "Automated build from ${GITHUB_SHA}." \
             --target "$GITHUB_SHA" \
             --prerelease \
           || {
             gh release edit latest \
+              --repo "$GITHUB_REPOSITORY" \
               --title "Latest build" \
               --notes "Automated build from ${GITHUB_SHA}." \
               --prerelease
-            gh release upload latest komari-theme-kumo.zip --clobber
+            gh release upload latest komari-theme-kumo.zip --repo "$GITHUB_REPOSITORY" --clobber
           }
 
   version-release:
@@ -102,5 +104,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" komari-theme-kumo.zip \
+            --repo "$GITHUB_REPOSITORY" \
             --title "$GITHUB_REF_NAME" --generate-notes \
-          || gh release upload "$GITHUB_REF_NAME" komari-theme-kumo.zip --clobber
+          || gh release upload "$GITHUB_REF_NAME" komari-theme-kumo.zip --repo "$GITHUB_REPOSITORY" --clobber
