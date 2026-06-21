@@ -72,6 +72,10 @@ export function SettingsDialog({
     setOverview,
     background,
     backgroundType,
+    backgroundImageUrl,
+    setBackgroundImageUrl,
+    backgroundVideoUrl,
+    setBackgroundVideoUrl,
     setBackgroundFile,
     clearBackground,
   } = useSettings();
@@ -214,6 +218,22 @@ export function SettingsDialog({
                   </button>
                 </>
               ) : null}
+            </div>
+            <div className="mt-3 space-y-2">
+              <input
+                value={backgroundImageUrl}
+                onChange={(e) => setBackgroundImageUrl(e.target.value)}
+                placeholder={t("backgroundImageUrl")}
+                aria-label={t("backgroundImageUrl")}
+                className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
+              />
+              <input
+                value={backgroundVideoUrl}
+                onChange={(e) => setBackgroundVideoUrl(e.target.value)}
+                placeholder={t("backgroundVideoUrl")}
+                aria-label={t("backgroundVideoUrl")}
+                className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
+              />
             </div>
           </Section>
 

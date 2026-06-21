@@ -22,6 +22,7 @@ import {
   saveBackgroundBlob,
   clearBackgroundBlob,
 } from "@/lib/bg-store";
+import { isSafeResourceUrl } from "@/lib/sanitize";
 
 export type Appearance = "light" | "dark" | "system";
 export type Mode = "light" | "dark";
@@ -76,6 +77,8 @@ const LS = {
   columns: "kumo-cols",
   surface: "kumo-surface",
   overview: "kumo-overview",
+  backgroundImageUrl: "kumo-background-image-url",
+  backgroundVideoUrl: "kumo-background-video-url",
 } as const;
 
 function readLS(key: string): string | null {
@@ -116,6 +119,10 @@ interface SettingsContextValue {
   background: string;
   /** Kind of the visitor background, for choosing <img>/<video> rendering. */
   backgroundType: "" | BackgroundKind;
+  backgroundImageUrl: string;
+  setBackgroundImageUrl: (url: string) => void;
+  backgroundVideoUrl: string;
+  setBackgroundVideoUrl: (url: string) => void;
   /** Store an uploaded image/video file as the background (persisted in IndexedDB). */
   setBackgroundFile: (file: File) => Promise<void>;
   /** Remove the visitor background. */
@@ -144,6 +151,8 @@ export function Providers({ children }: { children: ReactNode }) {
   const [overview, setOverviewState] = useState<OverviewVisibility>("show");
   const [background, setBackgroundState] = useState<string>("");
   const [backgroundType, setBackgroundType] = useState<"" | BackgroundKind>("");
+  const [backgroundImageUrl, setBackgroundImageUrlState] = useState("");
+  const [backgroundVideoUrl, setBackgroundVideoUrlState] = useState("");
   const [systemDark, setSystemDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -163,6 +172,17 @@ export function Providers({ children }: { children: ReactNode }) {
     if (sf === "solid" || sf === "glass") setSurfaceState(sf);
     const ov = readLS(LS.overview);
     if (ov === "show" || ov === "hide") setOverviewState(ov);
+    const imageUrl = readLS(LS.backgroundImageUrl)?.trim() ?? "";
+    const videoUrl = readLS(LS.backgroundVideoUrl)?.trim() ?? "";
+    setBackgroundImageUrlState(imageUrl);
+    setBackgroundVideoUrlState(videoUrl);
+    if (videoUrl && isSafeResourceUrl(videoUrl)) {
+      setBackgroundState(videoUrl);
+      setBackgroundType("video");
+    } else if (imageUrl && isSafeResourceUrl(imageUrl)) {
+      setBackgroundState(imageUrl);
+      setBackgroundType("image");
+    }
     setMounted(true);
   }, []);
 
@@ -248,8 +268,48 @@ export function Providers({ children }: { children: ReactNode }) {
     setOverviewState(v);
     writeLS(LS.overview, v);
   }, []);
+  const setBackgroundImageUrl = useCallback((url: string) => {
+    const next = url.trim();
+    void clearBackgroundBlob();
+    setBackgroundImageUrlState(next);
+    writeLS(LS.backgroundImageUrl, next);
+    setBackgroundState((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      if (backgroundVideoUrl && isSafeResourceUrl(backgroundVideoUrl)) return backgroundVideoUrl;
+      return next && isSafeResourceUrl(next) ? next : "";
+    });
+    setBackgroundType(
+      backgroundVideoUrl && isSafeResourceUrl(backgroundVideoUrl)
+        ? "video"
+        : next && isSafeResourceUrl(next)
+          ? "image"
+          : "",
+    );
+  }, [backgroundVideoUrl]);
+  const setBackgroundVideoUrl = useCallback((url: string) => {
+    const next = url.trim();
+    void clearBackgroundBlob();
+    setBackgroundVideoUrlState(next);
+    writeLS(LS.backgroundVideoUrl, next);
+    setBackgroundState((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      if (next && isSafeResourceUrl(next)) return next;
+      return backgroundImageUrl && isSafeResourceUrl(backgroundImageUrl) ? backgroundImageUrl : "";
+    });
+    setBackgroundType(
+      next && isSafeResourceUrl(next)
+        ? "video"
+        : backgroundImageUrl && isSafeResourceUrl(backgroundImageUrl)
+          ? "image"
+          : "",
+    );
+  }, [backgroundImageUrl]);
   const setBackgroundFile = useCallback(async (file: File) => {
     await saveBackgroundBlob(file);
+    setBackgroundImageUrlState("");
+    setBackgroundVideoUrlState("");
+    writeLS(LS.backgroundImageUrl, "");
+    writeLS(LS.backgroundVideoUrl, "");
     const url = URL.createObjectURL(file);
     setBackgroundState((prev) => {
       if (prev) URL.revokeObjectURL(prev);
@@ -259,6 +319,10 @@ export function Providers({ children }: { children: ReactNode }) {
   }, []);
   const clearBackground = useCallback(() => {
     void clearBackgroundBlob();
+    setBackgroundImageUrlState("");
+    setBackgroundVideoUrlState("");
+    writeLS(LS.backgroundImageUrl, "");
+    writeLS(LS.backgroundVideoUrl, "");
     setBackgroundState((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return "";
@@ -308,13 +372,17 @@ export function Providers({ children }: { children: ReactNode }) {
       setOverview,
       background,
       backgroundType,
+      backgroundImageUrl,
+      setBackgroundImageUrl,
+      backgroundVideoUrl,
+      setBackgroundVideoUrl,
       setBackgroundFile,
       clearBackground,
       seedDefaults,
       t,
       mounted,
     }),
-    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundType, setBackgroundFile, clearBackground, seedDefaults, t, mounted],
+    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundType, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, setBackgroundFile, clearBackground, seedDefaults, t, mounted],
   );
 
   return (
