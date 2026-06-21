@@ -141,6 +141,8 @@ export function Dashboard() {
         version={version}
         logoUrl={options.logoUrl}
         lastUpdated={lastUpdated}
+        search={search}
+        onSearch={setSearch}
       />
 
       <main className="mx-auto max-w-[1400px] space-y-5 px-4 py-6 sm:px-6">
@@ -163,8 +165,6 @@ export function Dashboard() {
           <>
             <StatsBar stats={stats} views={views} />
             <Toolbar
-              search={search}
-              onSearch={setSearch}
               groups={groups}
               activeGroup={group}
               onGroup={setGroup}

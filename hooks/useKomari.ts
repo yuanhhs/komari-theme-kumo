@@ -24,11 +24,35 @@ export function useVersion() {
 
 /** Current viewer's auth state (`logged_in`). Errors are treated as logged-out. */
 export function useMe() {
-  return useSWR("me", () => komari.getMe(), {
+  return useSWR(
+    "me",
+    async () => {
+      try {
+        const me = await komari.getMe();
+        if (process.env.NODE_ENV === "development") {
+          return { ...me, logged_in: true };
+        }
+        return me;
+      } catch (error) {
+        if (process.env.NODE_ENV === "development") {
+          return {
+            "2fa_enabled": false,
+            logged_in: true,
+            sso_id: "",
+            sso_type: "development",
+            username: "dev",
+            uuid: "development",
+          };
+        }
+        throw error;
+      }
+    },
+    {
     revalidateOnFocus: false,
     refreshInterval: CONFIG_INTERVAL,
     shouldRetryOnError: false,
-  });
+    },
+  );
 }
 
 export function useNodes() {

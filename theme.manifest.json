@@ -3,7 +3,7 @@
   "short": "Kumo",
   "description": "A clean, responsive Komari monitor theme built with Cloudflare's Kumo design system.",
   "author": "Yuanhhs",
-  "url": "https://komari.yuanhhs.online/",
+  "url": "https://github.com/yuanhhs/komari-theme-kumo",
   "preview": "preview.png",
   "configuration": {
     "type": "managed",

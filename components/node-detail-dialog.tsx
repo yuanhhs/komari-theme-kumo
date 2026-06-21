@@ -138,6 +138,13 @@ export function NodeDetailDialog({
       data: records.map((r) => [ts(r), ratioPercent(r.ram, r.ram_total)]),
     },
   ];
+  if (node.swap_total > 0) {
+    cpuRam.push({
+      name: t("swap"),
+      color: colors.warning,
+      data: records.map((r) => [ts(r), ratioPercent(r.swap, r.swap_total)]),
+    });
+  }
   const netSeries: ChartSeries[] = [
     { name: t("upload"), color: colors.up, data: records.map((r) => [ts(r), r.net_out]) },
     { name: t("download"), color: colors.down, data: records.map((r) => [ts(r), r.net_in]) },
@@ -268,11 +275,16 @@ export function NodeDetailDialog({
             {/* Charts */}
             <div className="grid gap-4 lg:grid-cols-2">
               <Panel
-                title={`${t("cpu")} / ${t("memory")}`}
+                title={
+                  node.swap_total > 0
+                    ? `${t("cpu")} / ${t("memory")} / ${t("swap")}`
+                    : `${t("cpu")} / ${t("memory")}`
+                }
                 icon={
                   <span className="flex items-center gap-1">
                     <Cpu size={13} />
                     <MemoryStick size={13} />
+                    {node.swap_total > 0 ? <ReplaceAll size={13} /> : null}
                   </span>
                 }
               >
@@ -359,6 +371,13 @@ export function NodeDetailDialog({
                     }
                   />
                   <InfoRow label={t("memory")} icon={<MemoryStick size={12} />} value={formatBytes(node.mem_total)} />
+                  {node.swap_total > 0 ? (
+                    <InfoRow
+                      label={t("swap")}
+                      icon={<ReplaceAll size={12} />}
+                      value={formatBytes(node.swap_total)}
+                    />
+                  ) : null}
                   <InfoRow label={t("disk")} icon={<HardDrive size={12} />} value={formatBytes(node.disk_total)} />
                   {node.price > 0 ? (
                     <InfoRow

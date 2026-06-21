@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Button, cn } from "@cloudflare/kumo";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@cloudflare/kumo";
 import {
   GearIcon,
   SunIcon,
   MoonIcon,
   CloudIcon,
   SignInIcon,
+  MagnifyingGlassIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { useSettings } from "@/components/providers";
@@ -21,21 +23,39 @@ export function SiteHeader({
   version,
   logoUrl,
   lastUpdated,
+  search,
+  onSearch,
 }: {
   info?: PublicInfo;
   version?: VersionInfo;
   logoUrl?: string;
   lastUpdated?: string;
+  search: string;
+  onSearch: (value: string) => void;
 }) {
-  const { t, lang, mode, appearance, setAppearance } = useSettings();
+  const { t, lang, mode, setAppearance } = useSettings();
   const { data: me } = useMe();
   const loggedIn = !!me?.logged_in;
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const sitename = info?.sitename || "Komari";
   const toggleMode = () => setAppearance(mode === "dark" ? "light" : "dark");
   const showLogo = logoUrl && !logoError;
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    inputRef.current?.focus();
+
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!searchRef.current?.contains(event.target as Node)) setSearchOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutside);
+    return () => document.removeEventListener("pointerdown", closeOnOutside);
+  }, [searchOpen]);
 
   return (
     <header className="border-kumo-hairline bg-kumo-canvas/80 sticky top-0 z-30 border-b backdrop-blur-md">
@@ -71,7 +91,7 @@ export function SiteHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="relative flex items-center gap-1.5" ref={searchRef}>
           <Button
             variant="ghost"
             size="sm"
@@ -79,6 +99,14 @@ export function SiteHeader({
             icon={mode === "dark" ? SunIcon : MoonIcon}
             aria-label={t("appearance")}
             onClick={toggleMode}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            shape="square"
+            icon={MagnifyingGlassIcon}
+            aria-label={t("search")}
+            onClick={() => setSearchOpen((open) => !open)}
           />
           {loggedIn ? (
             <Button
@@ -89,18 +117,49 @@ export function SiteHeader({
               aria-label={t("settings")}
               onClick={() => setSettingsOpen(true)}
             />
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              shape="square"
-              icon={SignInIcon}
-              aria-label={t("login")}
-              onClick={() => {
-                window.location.href = "/admin";
-              }}
-            />
-          )}
+          ) : null}
+          <Button
+            variant="ghost"
+            size="sm"
+            shape="square"
+            icon={SignInIcon}
+            aria-label={t("login")}
+            onClick={() => {
+              window.location.href = "/admin";
+            }}
+          />
+
+          {searchOpen ? (
+            <div className="border-kumo-line bg-kumo-base absolute top-11 right-0 z-40 w-[min(20rem,calc(100vw-2rem))] rounded-lg border p-2 shadow-lg">
+              <div className="relative">
+                <MagnifyingGlassIcon
+                  size={16}
+                  className="text-kumo-subtle pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
+                />
+                <input
+                  ref={inputRef}
+                  value={search}
+                  onChange={(e) => onSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setSearchOpen(false);
+                  }}
+                  placeholder={t("searchPlaceholder")}
+                  aria-label={t("search")}
+                  className="bg-kumo-canvas border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border pr-8 pl-9 text-sm outline-none focus:ring-2"
+                />
+                {search ? (
+                  <button
+                    type="button"
+                    onClick={() => onSearch("")}
+                    aria-label={t("close")}
+                    className="text-kumo-subtle hover:text-kumo-default absolute top-1/2 right-2.5 -translate-y-1/2 transition-colors"
+                  >
+                    <XIcon size={15} />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
