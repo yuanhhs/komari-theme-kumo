@@ -25,7 +25,7 @@ Base UI + Tailwind CSS v4）构建。
 - **自定义站点信息** —— 支持通过主题设置持久化站点名称、Logo 与背景路径。
 - **自定义背景** —— 访客可上传本地图片 / 视频作背景（存入 IndexedDB），覆盖管理员设置的默认背景。
 - **国际化** —— 简体中文 + English，自动识别、可切换。
-- **管理员可配置** —— 内置 Komari `managed` 配置（默认外观/视图/列数/卡片样式/强调色、离线排序、
+- **管理员可配置** —— 内置 Komari `managed` 配置（默认外观/视图/列数/卡片样式/强调色、
   分组筛选、Logo、背景图、页脚备注）。
 
 ## 技术栈
@@ -110,7 +110,6 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 | `defaultColumns` | select | `4` | 网格视图宽屏下每行列数（4 / 5） |
 | `cardStyle` | select | `solid` | 卡片样式：实心 / 磨砂 |
 | `defaultAccent` | select | `default` | 强调色 |
-| `showOfflineLast` | switch | `false` | 离线节点排到最后 |
 | `enableGroupTabs` | switch | `true` | 显示分组筛选 |
 | `siteName` | string | — | 头部站点名称（留空使用 Komari 后端站点名称） |
 | `logoUrl` | string | — | 头部 Logo（留空使用内置云朵图标） |

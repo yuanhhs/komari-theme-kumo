@@ -111,11 +111,8 @@ export function Dashboard() {
           .includes(q),
       );
     }
-    if (options.showOfflineLast) {
-      list = [...list].sort((a, b) => Number(b.online) - Number(a.online));
-    }
     return list;
-  }, [views, group, search, options.showOfflineLast]);
+  }, [views, group, search]);
 
   const selectedView = useMemo(
     () => views.find((v) => v.node.uuid === selected) ?? null,

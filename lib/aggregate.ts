@@ -89,9 +89,9 @@ export function groupNodeViews(views: NodeView[]): NodeGroup[] {
     });
 }
 
-/** Distinct, sorted group names (excluding the empty group). */
+/** Distinct group names in node order (excluding the empty group). */
 export function groupNames(views: NodeView[]): string[] {
   const names = new Set<string>();
   for (const view of views) if (view.node.group) names.add(view.node.group);
-  return [...names].sort((a, b) => a.localeCompare(b));
+  return [...names];
 }

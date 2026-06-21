@@ -50,12 +50,6 @@
       },
       { "type": "title", "name": { "zh-CN": "显示", "en": "Display" } },
       {
-        "key": "showOfflineLast",
-        "type": "switch",
-        "default": false,
-        "name": { "zh-CN": "离线节点排在最后", "en": "Sort offline nodes last" }
-      },
-      {
         "key": "enableGroupTabs",
         "type": "switch",
         "default": true,

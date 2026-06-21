@@ -9,8 +9,6 @@ export interface ThemeOptions {
   logoUrl: string;
   footerNote: string;
   backgroundUrl: string;
-  /** Sort offline nodes to the end of each group. */
-  showOfflineLast: boolean;
   /** Show the per-group filter tabs when groups exist. */
   enableGroupTabs: boolean;
   /** Admin defaults applied only when the visitor has no saved preference. */
@@ -52,7 +50,6 @@ export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
     logoUrl: asResourceUrl(s.logoUrl),
     footerNote: asString(s.footerNote),
     backgroundUrl: asResourceUrl(s.backgroundUrl),
-    showOfflineLast: asBool(s.showOfflineLast, false),
     enableGroupTabs: asBool(s.enableGroupTabs, true),
     defaultView: VIEWS.includes(view as ViewMode) ? (view as ViewMode) : undefined,
     defaultAppearance: APPEARANCES.includes(appearance as Appearance)
