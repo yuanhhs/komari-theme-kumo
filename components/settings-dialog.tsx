@@ -20,6 +20,7 @@ import {
   type Accent,
   type Appearance,
   type Columns,
+  type OverviewVisibility,
   type Surface,
   type ViewMode,
 } from "@/components/providers";
@@ -67,6 +68,8 @@ export function SettingsDialog({
     setColumns,
     surface,
     setSurface,
+    overview,
+    setOverview,
     background,
     backgroundType,
     setBackgroundFile,
@@ -144,6 +147,18 @@ export function SettingsDialog({
               options={[
                 { value: "solid", label: t("solid") },
                 { value: "glass", label: t("frosted") },
+              ]}
+            />
+          </Section>
+
+          <Section label={t("overviewInfo")}>
+            <Segmented<OverviewVisibility>
+              value={overview}
+              onChange={setOverview}
+              size="sm"
+              options={[
+                { value: "show", label: t("show") },
+                { value: "hide", label: t("hide") },
               ]}
             />
           </Section>

@@ -1,0 +1,66 @@
+const SAFE_TAGS = new Set(["a", "br", "strong", "b", "em", "i", "u", "span"]);
+const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "blob:"]);
+
+export function isSafeResourceUrl(value: string): boolean {
+  const url = value.trim();
+  if (!url) return false;
+  if (url.startsWith("/") && !url.startsWith("//")) return true;
+  try {
+    return SAFE_URL_PROTOCOLS.has(new URL(url).protocol);
+  } catch {
+    return false;
+  }
+}
+
+function isSafeLinkHref(value: string): boolean {
+  const href = value.trim();
+  if (!href) return false;
+  if (href.startsWith("#")) return true;
+  return isSafeResourceUrl(href);
+}
+
+export function sanitizeHtml(html: string): string {
+  if (typeof window === "undefined") return "";
+
+  const template = document.createElement("template");
+  template.innerHTML = html;
+
+  const walk = (node: Node) => {
+    for (const child of [...node.childNodes]) {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        const element = child as HTMLElement;
+        const tag = element.tagName.toLowerCase();
+
+        if (!SAFE_TAGS.has(tag)) {
+          element.replaceWith(...Array.from(element.childNodes));
+          continue;
+        }
+
+        for (const attr of [...element.attributes]) {
+          const name = attr.name.toLowerCase();
+          const value = attr.value;
+          if (name.startsWith("on") || name === "style") {
+            element.removeAttribute(attr.name);
+            continue;
+          }
+          if (tag === "a" && name === "href") {
+            if (isSafeLinkHref(value)) {
+              element.setAttribute("target", "_blank");
+              element.setAttribute("rel", "noreferrer");
+            } else {
+              element.removeAttribute(attr.name);
+            }
+            continue;
+          }
+          if (!(tag === "a" && (name === "target" || name === "rel"))) {
+            element.removeAttribute(attr.name);
+          }
+        }
+      }
+      walk(child);
+    }
+  };
+
+  walk(template.content);
+  return template.innerHTML;
+}

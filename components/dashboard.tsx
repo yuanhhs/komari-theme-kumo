@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { useDashboard, usePublicInfo, useVersion } from "@/hooks/useKomari";
 import { computeStats, groupNames } from "@/lib/aggregate";
 import { parseThemeOptions } from "@/lib/theme-settings";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { useSettings, type Columns } from "@/components/providers";
 import { SiteHeader } from "@/components/site-header";
 import { StatsBar } from "@/components/stats-bar";
@@ -53,7 +54,7 @@ function CenteredState({
 }
 
 export function Dashboard() {
-  const { t, view, columns, background, backgroundType, seedDefaults } = useSettings();
+  const { t, view, columns, overview, background, backgroundType, seedDefaults } = useSettings();
   const { views, isLoading, error, lastUpdated, refresh } = useDashboard();
   const { data: info } = usePublicInfo();
   const { data: version } = useVersion();
@@ -61,6 +62,10 @@ export function Dashboard() {
   const options = useMemo(() => parseThemeOptions(info), [info]);
   const bgUrl = background || options.backgroundUrl;
   const bgIsVideo = !!background && backgroundType === "video";
+  const footerNote = useMemo(
+    () => (options.footerNote ? sanitizeHtml(options.footerNote) : ""),
+    [options.footerNote],
+  );
 
   const [search, setSearch] = useState("");
   const [group, setGroup] = useState("all");
@@ -163,7 +168,7 @@ export function Dashboard() {
           </div>
         ) : (
           <>
-            <StatsBar stats={stats} views={views} />
+            {overview === "show" ? <StatsBar stats={stats} views={views} /> : null}
             <Toolbar
               groups={groups}
               activeGroup={group}
@@ -200,10 +205,10 @@ export function Dashboard() {
 
       <footer className="border-kumo-hairline mt-6 border-t">
         <div className="mx-auto max-w-[1400px] px-4 py-6 text-center sm:px-6">
-          {options.footerNote ? (
+          {footerNote ? (
             <div
               className="text-kumo-subtle mb-2 text-sm"
-              dangerouslySetInnerHTML={{ __html: options.footerNote }}
+              dangerouslySetInnerHTML={{ __html: footerNote }}
             />
           ) : null}
           <a

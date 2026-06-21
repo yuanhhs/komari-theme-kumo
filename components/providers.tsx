@@ -31,6 +31,7 @@ export type Accent = "default" | "blue" | "violet" | "emerald" | "rose" | "cyan"
 export type Columns = 4 | 5;
 /** Card surface style: opaque or frosted glass (translucent + backdrop-blur). */
 export type Surface = "solid" | "glass";
+export type OverviewVisibility = "show" | "hide";
 /** Kind of the custom background media. */
 export type BackgroundKind = "image" | "video";
 
@@ -74,6 +75,7 @@ const LS = {
   accent: "kumo-accent",
   columns: "kumo-cols",
   surface: "kumo-surface",
+  overview: "kumo-overview",
 } as const;
 
 function readLS(key: string): string | null {
@@ -108,6 +110,8 @@ interface SettingsContextValue {
   setColumns: (c: Columns) => void;
   surface: Surface;
   setSurface: (s: Surface) => void;
+  overview: OverviewVisibility;
+  setOverview: (v: OverviewVisibility) => void;
   /** Visitor background as an object URL (image or video); overrides the admin default locally. Empty when none. */
   background: string;
   /** Kind of the visitor background, for choosing <img>/<video> rendering. */
@@ -137,6 +141,7 @@ export function Providers({ children }: { children: ReactNode }) {
   const [accent, setAccentState] = useState<Accent>("default");
   const [columns, setColumnsState] = useState<Columns>(4);
   const [surface, setSurfaceState] = useState<Surface>("solid");
+  const [overview, setOverviewState] = useState<OverviewVisibility>("show");
   const [background, setBackgroundState] = useState<string>("");
   const [backgroundType, setBackgroundType] = useState<"" | BackgroundKind>("");
   const [systemDark, setSystemDark] = useState(false);
@@ -156,6 +161,8 @@ export function Providers({ children }: { children: ReactNode }) {
     if (c === "4" || c === "5") setColumnsState(Number(c) as Columns);
     const sf = readLS(LS.surface);
     if (sf === "solid" || sf === "glass") setSurfaceState(sf);
+    const ov = readLS(LS.overview);
+    if (ov === "show" || ov === "hide") setOverviewState(ov);
     setMounted(true);
   }, []);
 
@@ -237,6 +244,10 @@ export function Providers({ children }: { children: ReactNode }) {
     setSurfaceState(s);
     writeLS(LS.surface, s);
   }, []);
+  const setOverview = useCallback((v: OverviewVisibility) => {
+    setOverviewState(v);
+    writeLS(LS.overview, v);
+  }, []);
   const setBackgroundFile = useCallback(async (file: File) => {
     await saveBackgroundBlob(file);
     const url = URL.createObjectURL(file);
@@ -293,6 +304,8 @@ export function Providers({ children }: { children: ReactNode }) {
       setColumns,
       surface,
       setSurface,
+      overview,
+      setOverview,
       background,
       backgroundType,
       setBackgroundFile,
@@ -301,7 +314,7 @@ export function Providers({ children }: { children: ReactNode }) {
       t,
       mounted,
     }),
-    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, background, backgroundType, setBackgroundFile, clearBackground, seedDefaults, t, mounted],
+    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundType, setBackgroundFile, clearBackground, seedDefaults, t, mounted],
   );
 
   return (

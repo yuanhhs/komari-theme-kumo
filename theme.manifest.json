@@ -1,7 +1,7 @@
 {
   "name": "Kumo for Komari",
   "short": "Kumo",
-  "description": "A clean, responsive Komari monitor theme built with Cloudflare's Kumo design system.",
+  "description": "一个基于 Cloudflare Kumo 设计系统构建的简洁响应式 Komari 监控主题。",
   "author": "Yuanhhs",
   "url": "https://github.com/yuanhhs/komari-theme-kumo",
   "preview": "preview.png",

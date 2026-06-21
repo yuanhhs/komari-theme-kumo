@@ -2,6 +2,7 @@
 
 import type { PublicInfo } from "./types";
 import type { Accent, Appearance, Columns, Surface, ViewMode } from "@/components/providers";
+import { isSafeResourceUrl } from "@/lib/sanitize";
 
 export interface ThemeOptions {
   logoUrl: string;
@@ -29,6 +30,11 @@ function asBool(v: unknown, fallback: boolean): boolean {
   return fallback;
 }
 
+function asResourceUrl(v: unknown): string {
+  const url = asString(v);
+  return isSafeResourceUrl(url) ? url : "";
+}
+
 const VIEWS: ViewMode[] = ["grid", "list"];
 const APPEARANCES: Appearance[] = ["light", "dark", "system"];
 const ACCENTS: Accent[] = ["default", "blue", "violet", "emerald", "rose", "cyan"];
@@ -41,9 +47,9 @@ export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
   const columns = asString(s.defaultColumns);
   const cardStyle = asString(s.cardStyle);
   return {
-    logoUrl: asString(s.logoUrl),
+    logoUrl: asResourceUrl(s.logoUrl),
     footerNote: asString(s.footerNote),
-    backgroundUrl: asString(s.backgroundUrl),
+    backgroundUrl: asResourceUrl(s.backgroundUrl),
     showOfflineLast: asBool(s.showOfflineLast, false),
     enableGroupTabs: asBool(s.enableGroupTabs, true),
     defaultView: VIEWS.includes(view as ViewMode) ? (view as ViewMode) : undefined,
