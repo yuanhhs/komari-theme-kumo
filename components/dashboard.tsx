@@ -70,8 +70,8 @@ export function Dashboard() {
   const { data: version } = useVersion();
 
   const options = useMemo(() => parseThemeOptions(info), [info]);
-  const bgUrl = background || options.backgroundUrl;
-  const bgIsVideo = !!background && backgroundType === "video";
+  const bgUrl = background || options.backgroundVideoUrl || options.backgroundUrl;
+  const bgIsVideo = background ? backgroundType === "video" : !!options.backgroundVideoUrl;
   const footerNote = useMemo(
     () => (options.footerNote ? sanitizeHtml(options.footerNote) : ""),
     [options.footerNote],
@@ -93,6 +93,7 @@ export function Dashboard() {
         accent: options.defaultAccent,
         columns: options.defaultColumns,
         surface: options.defaultSurface,
+        backgroundBrightness: options.backgroundBrightness,
       });
     }
   }, [info, options, seedDefaults]);

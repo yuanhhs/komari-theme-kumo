@@ -71,7 +71,7 @@ export interface NodeGroup {
   views: NodeView[];
 }
 
-/** Group views by `node.group`; empty group is bucketed last under "". */
+/** Group views by `node.group`, preserving the backend node order. */
 export function groupNodeViews(views: NodeView[]): NodeGroup[] {
   const buckets = new Map<string, NodeView[]>();
   for (const view of views) {
@@ -80,13 +80,7 @@ export function groupNodeViews(views: NodeView[]): NodeGroup[] {
     if (list) list.push(view);
     else buckets.set(key, [view]);
   }
-  return [...buckets.entries()]
-    .map(([name, list]) => ({ name, views: list }))
-    .sort((a, b) => {
-      if (a.name === "") return 1;
-      if (b.name === "") return -1;
-      return a.name.localeCompare(b.name);
-    });
+  return [...buckets.entries()].map(([name, list]) => ({ name, views: list }));
 }
 
 /** Distinct group names in node order (excluding the empty group). */

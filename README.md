@@ -111,9 +111,11 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 | `cardStyle` | select | `solid` | 卡片样式：实心 / 磨砂 |
 | `defaultAccent` | select | `default` | 强调色 |
 | `enableGroupTabs` | switch | `true` | 显示分组筛选 |
-| `siteName` | string | — | 头部站点名称（留空使用 Komari 后端站点名称） |
+| `titleText` | string | — | 头部站点名称（留空使用 Komari 后端站点名称） |
 | `logoUrl` | string | — | 头部 Logo（留空使用内置云朵图标） |
 | `backgroundUrl` | string | — | 页面背景图 |
+| `backgroundVideoUrl` | string | — | 页面背景视频（优先于背景图） |
+| `backgroundBrightness` | select | `100` | 页面背景亮度 |
 | `footerNote` | richtext | — | 显示在 Powered-by 上方的 HTML |
 
 本地静态图片默认放在 `public/assets/`，在设置里使用 `/assets/文件名` 作为 Logo 或背景路径；
@@ -121,7 +123,7 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 
 访客偏好优先级高于管理员默认值。外观、语言、视图、列数、卡片样式、强调色等轻量设置存储在
 `localStorage`；本地上传的 Logo 与背景媒体存储在 IndexedDB 的 `kumo-theme` 数据库中。
-站点名称通过 `/api/admin/theme/settings` 写入 Komari 的主题设置并随站点持久化。
+站点名称、Logo、背景图片/视频地址与背景亮度保存到 Komari 的 `theme_settings` 后随站点持久化，换浏览器也会生效。
 
 ## 项目结构
 

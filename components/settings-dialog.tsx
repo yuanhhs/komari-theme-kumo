@@ -81,14 +81,11 @@ export function SettingsDialog({
     backgroundType,
     backgroundBrightness,
     setBackgroundBrightness,
-    backgroundImageUrl,
     setBackgroundImageUrl,
-    backgroundVideoUrl,
     setBackgroundVideoUrl,
     setBackgroundFile,
     clearBackground,
     logo,
-    logoUrl,
     setLogoUrl,
     setLogoFile,
     clearLogo,
@@ -101,12 +98,36 @@ export function SettingsDialog({
   const [siteName, setSiteName] = useState("");
   const [savingSiteName, setSavingSiteName] = useState(false);
   const [siteNameStatus, setSiteNameStatus] = useState<"saved" | "error" | "">("");
+  const [logoSettingUrl, setLogoSettingUrl] = useState("");
+  const [savingLogoSetting, setSavingLogoSetting] = useState(false);
+  const [logoSettingStatus, setLogoSettingStatus] = useState<"saved" | "error" | "">("");
+  const [backgroundSettingImageUrl, setBackgroundSettingImageUrl] = useState("");
+  const [backgroundSettingVideoUrl, setBackgroundSettingVideoUrl] = useState("");
+  const [savingBackgroundSetting, setSavingBackgroundSetting] = useState(false);
+  const [backgroundSettingStatus, setBackgroundSettingStatus] = useState<
+    "saved" | "error" | ""
+  >("");
 
   useEffect(() => {
     const settings = (info?.theme_settings ?? {}) as Record<string, unknown>;
-    const next = typeof settings.siteName === "string" ? settings.siteName : "";
+    const next =
+      typeof settings.titleText === "string"
+        ? settings.titleText
+        : typeof settings.siteName === "string"
+          ? settings.siteName
+          : "";
     setSiteName(next);
     setSiteNameStatus("");
+    const nextLogoUrl = typeof settings.logoUrl === "string" ? settings.logoUrl : "";
+    const nextBackgroundUrl =
+      typeof settings.backgroundUrl === "string" ? settings.backgroundUrl : "";
+    const nextBackgroundVideoUrl =
+      typeof settings.backgroundVideoUrl === "string" ? settings.backgroundVideoUrl : "";
+    setLogoSettingUrl(nextLogoUrl);
+    setBackgroundSettingImageUrl(nextBackgroundUrl);
+    setBackgroundSettingVideoUrl(nextBackgroundVideoUrl);
+    setLogoSettingStatus("");
+    setBackgroundSettingStatus("");
   }, [info?.theme_settings]);
 
   const handleSaveSiteName = async () => {
@@ -116,7 +137,8 @@ export function SettingsDialog({
     try {
       await saveThemeSettings(info.theme, {
         ...(info.theme_settings ?? {}),
-        siteName: siteName.trim(),
+        titleText: siteName.trim(),
+        siteName: "",
       });
       await mutate("public-info");
       setSiteNameStatus("saved");
@@ -124,6 +146,44 @@ export function SettingsDialog({
       setSiteNameStatus("error");
     } finally {
       setSavingSiteName(false);
+    }
+  };
+
+  const handleSaveLogoSetting = async () => {
+    if (!info?.theme) return;
+    setSavingLogoSetting(true);
+    setLogoSettingStatus("");
+    try {
+      await saveThemeSettings(info.theme, {
+        ...(info.theme_settings ?? {}),
+        logoUrl: logoSettingUrl.trim(),
+      });
+      await mutate("public-info");
+      setLogoSettingStatus("saved");
+    } catch {
+      setLogoSettingStatus("error");
+    } finally {
+      setSavingLogoSetting(false);
+    }
+  };
+
+  const handleSaveBackgroundSetting = async () => {
+    if (!info?.theme) return;
+    setSavingBackgroundSetting(true);
+    setBackgroundSettingStatus("");
+    try {
+      await saveThemeSettings(info.theme, {
+        ...(info.theme_settings ?? {}),
+        backgroundUrl: backgroundSettingImageUrl.trim(),
+        backgroundVideoUrl: backgroundSettingVideoUrl.trim(),
+        backgroundBrightness: String(backgroundBrightness),
+      });
+      await mutate("public-info");
+      setBackgroundSettingStatus("saved");
+    } catch {
+      setBackgroundSettingStatus("error");
+    } finally {
+      setSavingBackgroundSetting(false);
     }
   };
 
@@ -283,13 +343,37 @@ export function SettingsDialog({
               ) : null}
             </div>
             <div className="mt-3">
-              <input
-                value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder={t("logoUrl")}
-                aria-label={t("logoUrl")}
-                className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
-              />
+              <div className="flex gap-2">
+                <input
+                  value={logoSettingUrl}
+                  onChange={(e) => {
+                    setLogoSettingUrl(e.target.value);
+                    setLogoUrl(e.target.value);
+                    setLogoSettingStatus("");
+                  }}
+                  placeholder={t("logoUrl")}
+                  aria-label={t("logoUrl")}
+                  className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 min-w-0 flex-1 rounded-md border px-3 text-sm outline-none focus:ring-2"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={!info?.theme || savingLogoSetting}
+                  onClick={handleSaveLogoSetting}
+                >
+                  {savingLogoSetting ? t("saving") : t("save")}
+                </Button>
+              </div>
+              {logoSettingStatus ? (
+                <div
+                  className={cn(
+                    "mt-2 text-xs",
+                    logoSettingStatus === "saved" ? "text-kumo-success" : "text-kumo-danger",
+                  )}
+                >
+                  {logoSettingStatus === "saved" ? t("saved") : t("saveFailed")}
+                </div>
+              ) : null}
             </div>
             {logoCropFile ? (
               <div className="mt-3">
@@ -367,15 +451,23 @@ export function SettingsDialog({
             </div>
             <div className="mt-3 space-y-2">
               <input
-                value={backgroundImageUrl}
-                onChange={(e) => setBackgroundImageUrl(e.target.value)}
+                value={backgroundSettingImageUrl}
+                onChange={(e) => {
+                  setBackgroundSettingImageUrl(e.target.value);
+                  setBackgroundImageUrl(e.target.value);
+                  setBackgroundSettingStatus("");
+                }}
                 placeholder={t("backgroundImageUrl")}
                 aria-label={t("backgroundImageUrl")}
                 className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
               />
               <input
-                value={backgroundVideoUrl}
-                onChange={(e) => setBackgroundVideoUrl(e.target.value)}
+                value={backgroundSettingVideoUrl}
+                onChange={(e) => {
+                  setBackgroundSettingVideoUrl(e.target.value);
+                  setBackgroundVideoUrl(e.target.value);
+                  setBackgroundSettingStatus("");
+                }}
                 placeholder={t("backgroundVideoUrl")}
                 aria-label={t("backgroundVideoUrl")}
                 className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
@@ -384,10 +476,35 @@ export function SettingsDialog({
             <div className="mt-3 space-y-2">
               <BackgroundBrightnessSlider
                 value={backgroundBrightness}
-                onChange={setBackgroundBrightness}
+                onChange={(value) => {
+                  setBackgroundBrightness(value);
+                  setBackgroundSettingStatus("");
+                }}
                 label={t("backgroundBrightness")}
                 enabled={open}
               />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={!info?.theme || savingBackgroundSetting}
+                  onClick={handleSaveBackgroundSetting}
+                >
+                  {savingBackgroundSetting ? t("saving") : t("save")}
+                </Button>
+                {backgroundSettingStatus ? (
+                  <div
+                    className={cn(
+                      "text-xs",
+                      backgroundSettingStatus === "saved"
+                        ? "text-kumo-success"
+                        : "text-kumo-danger",
+                    )}
+                  >
+                    {backgroundSettingStatus === "saved" ? t("saved") : t("saveFailed")}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </Section>
 

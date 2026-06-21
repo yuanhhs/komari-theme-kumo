@@ -56,10 +56,10 @@
         "name": { "zh-CN": "显示分组筛选", "en": "Show group filter" }
       },
       {
-        "key": "siteName",
+        "key": "titleText",
         "type": "string",
         "default": "",
-        "name": { "zh-CN": "站点名称", "en": "Site name" },
+        "name": { "zh-CN": "标题栏标题文本", "en": "Header title text" },
         "help": { "zh-CN": "留空使用 Komari 后端站点名称", "en": "Leave empty to use the Komari server site name" }
       },
       {
@@ -74,6 +74,19 @@
         "type": "string",
         "default": "",
         "name": { "zh-CN": "背景图 URL", "en": "Background image URL" }
+      },
+      {
+        "key": "backgroundVideoUrl",
+        "type": "string",
+        "default": "",
+        "name": { "zh-CN": "背景视频 URL", "en": "Background video URL" }
+      },
+      {
+        "key": "backgroundBrightness",
+        "type": "select",
+        "options": "20,40,60,80,100",
+        "default": "100",
+        "name": { "zh-CN": "背景亮度", "en": "Background brightness" }
       },
       {
         "key": "footerNote",

@@ -1,7 +1,14 @@
 /** Reads this theme's `managed` configuration values from `public_info.theme_settings`. */
 
 import type { PublicInfo } from "./types";
-import type { Accent, Appearance, Columns, Surface, ViewMode } from "@/components/providers";
+import type {
+  Accent,
+  Appearance,
+  BackgroundBrightness,
+  Columns,
+  Surface,
+  ViewMode,
+} from "@/components/providers";
 import { isSafeResourceUrl } from "@/lib/sanitize";
 
 export interface ThemeOptions {
@@ -9,6 +16,8 @@ export interface ThemeOptions {
   logoUrl: string;
   footerNote: string;
   backgroundUrl: string;
+  backgroundVideoUrl: string;
+  backgroundBrightness?: BackgroundBrightness;
   /** Show the per-group filter tabs when groups exist. */
   enableGroupTabs: boolean;
   /** Admin defaults applied only when the visitor has no saved preference. */
@@ -34,6 +43,13 @@ function asResourceUrl(v: unknown): string {
   return isSafeResourceUrl(url) ? url : "";
 }
 
+function asBrightness(v: unknown): BackgroundBrightness | undefined {
+  const n = typeof v === "number" ? v : Number(asString(v));
+  return n === 20 || n === 40 || n === 60 || n === 80 || n === 100
+    ? (n as BackgroundBrightness)
+    : undefined;
+}
+
 const VIEWS: ViewMode[] = ["grid", "list"];
 const APPEARANCES: Appearance[] = ["light", "dark", "system"];
 const ACCENTS: Accent[] = ["default", "blue", "violet", "emerald", "rose", "cyan"];
@@ -45,11 +61,14 @@ export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
   const accent = asString(s.defaultAccent);
   const columns = asString(s.defaultColumns);
   const cardStyle = asString(s.cardStyle);
+  const hasTitleText = typeof s.titleText === "string";
   return {
-    siteName: asString(s.siteName).trim(),
+    siteName: hasTitleText ? asString(s.titleText).trim() : asString(s.siteName).trim(),
     logoUrl: asResourceUrl(s.logoUrl),
     footerNote: asString(s.footerNote),
     backgroundUrl: asResourceUrl(s.backgroundUrl),
+    backgroundVideoUrl: asResourceUrl(s.backgroundVideoUrl),
+    backgroundBrightness: asBrightness(s.backgroundBrightness),
     enableGroupTabs: asBool(s.enableGroupTabs, true),
     defaultView: VIEWS.includes(view as ViewMode) ? (view as ViewMode) : undefined,
     defaultAppearance: APPEARANCES.includes(appearance as Appearance)
