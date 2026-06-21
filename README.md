@@ -89,7 +89,7 @@ npm run build:theme
 
 - **每次更新自动构建**：推送到 `main`、PR 或手动触发时，自动跑 `npm ci` → 类型检查 →
   `npm run build:theme`，并把打好的 `komari-theme-kumo.zip` 作为构建产物（artifact）上传。
-- **每次推送自动发包**：推送到 `main` 后，会更新 `latest` 预发布 Release，并覆盖附带的 zip。
+- **每次推送自动发包**：推送到 `main` 后，会创建数字版本的正式 Release（如 `v1.0.123`）并附上 zip。
 - **打标签正式发版**：推送 `vX.Y.Z` 形式的标签时，自动创建对应版本的 GitHub Release 并附上 zip。
 
 ```bash

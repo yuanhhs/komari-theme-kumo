@@ -1,7 +1,7 @@
 name: Build theme
 
-# Auto-build on every update. Main pushes publish a rolling latest release;
-# version tags publish immutable version releases.
+# Auto-build on every update. Main pushes publish numbered releases;
+# version tags publish immutable manually named releases.
 on:
   push:
     branches: [main]
@@ -47,44 +47,48 @@ jobs:
           path: komari-theme-kumo.zip
           if-no-files-found: error
 
-  latest-release:
+  auto-release:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download theme zip
         uses: actions/download-artifact@v4
         with:
           name: komari-theme-kumo
 
-      - name: Publish latest release
+      - name: Publish numbered release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/latest" \
+          BASE_VERSION="$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')")"
+          TAG="v${BASE_VERSION}.${GITHUB_RUN_NUMBER}"
+
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TAG}" \
             --method PATCH \
             --field "sha=${GITHUB_SHA}" \
             --field "force=true" \
           || gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
             --method POST \
-            --field "ref=refs/tags/latest" \
+            --field "ref=refs/tags/${TAG}" \
             --field "sha=${GITHUB_SHA}"
 
-          gh release create latest komari-theme-kumo.zip \
+          gh release create "${TAG}" komari-theme-kumo.zip \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Latest build" \
+            --title "${TAG}" \
             --notes "Automated build from ${GITHUB_SHA}." \
             --target "$GITHUB_SHA" \
-            --prerelease \
           || {
-            gh release edit latest \
+            gh release edit "${TAG}" \
               --repo "$GITHUB_REPOSITORY" \
-              --title "Latest build" \
-              --notes "Automated build from ${GITHUB_SHA}." \
-              --prerelease
-            gh release upload latest komari-theme-kumo.zip --repo "$GITHUB_REPOSITORY" --clobber
+              --title "${TAG}" \
+              --notes "Automated build from ${GITHUB_SHA}."
+            gh release upload "${TAG}" komari-theme-kumo.zip --repo "$GITHUB_REPOSITORY" --clobber
           }
 
   version-release:
