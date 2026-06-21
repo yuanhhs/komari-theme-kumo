@@ -90,6 +90,8 @@ export function Dashboard() {
         accent: options.defaultAccent,
         columns: options.defaultColumns,
         surface: options.defaultSurface,
+        overview: options.defaultOverview,
+        lang: options.defaultLang,
         backgroundBrightness: options.backgroundBrightness,
       });
     }

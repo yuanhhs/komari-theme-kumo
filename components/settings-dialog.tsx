@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import { Dialog, Button, cn } from "@cloudflare/kumo";
 import {
@@ -93,6 +93,9 @@ export function SettingsDialog({
   const { mutate } = useSWRConfig();
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const settingsRef = useRef<Record<string, unknown>>({});
+  const [savingPreferences, setSavingPreferences] = useState(false);
+  const [preferencesStatus, setPreferencesStatus] = useState<"saved" | "error" | "">("");
   const [backgroundSettingImageUrl, setBackgroundSettingImageUrl] = useState("");
   const [savingBackgroundSetting, setSavingBackgroundSetting] = useState(false);
   const [backgroundSettingStatus, setBackgroundSettingStatus] = useState<
@@ -101,24 +104,53 @@ export function SettingsDialog({
 
   useEffect(() => {
     const settings = (info?.theme_settings ?? {}) as Record<string, unknown>;
+    settingsRef.current = settings;
     const nextBackgroundUrl =
       typeof settings.backgroundUrl === "string" ? settings.backgroundUrl : "";
     setBackgroundSettingImageUrl(nextBackgroundUrl);
     setBackgroundSettingStatus("");
   }, [info?.theme_settings]);
 
+  const saveThemePatch = useCallback(
+    async (patch: Record<string, unknown>) => {
+      const next = {
+        ...settingsRef.current,
+        ...patch,
+      };
+      settingsRef.current = next;
+      if (!info?.theme) return;
+      await saveThemeSettings(info.theme, next);
+      await mutate("public-info");
+    },
+    [info?.theme, mutate],
+  );
+
+  const savePreferencePatch = useCallback(
+    async (patch: Record<string, unknown>) => {
+      setSavingPreferences(true);
+      setPreferencesStatus("");
+      try {
+        await saveThemePatch(patch);
+        setPreferencesStatus("saved");
+      } catch {
+        setPreferencesStatus("error");
+      } finally {
+        setSavingPreferences(false);
+      }
+    },
+    [saveThemePatch],
+  );
+
   const handleSaveBackgroundSetting = async () => {
     if (!info?.theme) return;
     setSavingBackgroundSetting(true);
     setBackgroundSettingStatus("");
     try {
-      await saveThemeSettings(info.theme, {
-        ...(info.theme_settings ?? {}),
+      await saveThemePatch({
         backgroundUrl: backgroundSettingImageUrl.trim(),
         backgroundVideoUrl: "",
         backgroundBrightness: String(backgroundBrightness),
       });
-      await mutate("public-info");
       setBackgroundSettingStatus("saved");
     } catch {
       setBackgroundSettingStatus("error");
@@ -139,13 +171,11 @@ export function SettingsDialog({
       setBackgroundSettingImageUrl(dataUrl);
       setBackgroundImageUrl(dataUrl);
       if (info?.theme) {
-        await saveThemeSettings(info.theme, {
-          ...(info.theme_settings ?? {}),
+        await saveThemePatch({
           backgroundUrl: dataUrl,
           backgroundVideoUrl: "",
           backgroundBrightness: String(backgroundBrightness),
         });
-        await mutate("public-info");
       }
       setBackgroundSettingStatus("saved");
     } catch {
@@ -162,19 +192,52 @@ export function SettingsDialog({
     if (!info?.theme) return;
     setSavingBackgroundSetting(true);
     try {
-      await saveThemeSettings(info.theme, {
-        ...(info.theme_settings ?? {}),
+      await saveThemePatch({
         backgroundUrl: "",
         backgroundVideoUrl: "",
         backgroundBrightness: String(backgroundBrightness),
       });
-      await mutate("public-info");
       setBackgroundSettingStatus("saved");
     } catch {
       setBackgroundSettingStatus("error");
     } finally {
       setSavingBackgroundSetting(false);
     }
+  };
+
+  const handleAppearanceChange = (value: Appearance) => {
+    setAppearance(value);
+    void savePreferencePatch({ defaultAppearance: value });
+  };
+
+  const handleViewChange = (value: ViewMode) => {
+    setView(value);
+    void savePreferencePatch({ defaultView: value });
+  };
+
+  const handleColumnsChange = (value: Columns) => {
+    setColumns(value);
+    void savePreferencePatch({ defaultColumns: String(value) });
+  };
+
+  const handleSurfaceChange = (value: Surface) => {
+    setSurface(value);
+    void savePreferencePatch({ cardStyle: value });
+  };
+
+  const handleOverviewChange = (value: OverviewVisibility) => {
+    setOverview(value);
+    void savePreferencePatch({ overviewVisibility: value });
+  };
+
+  const handleLangChange = (value: Lang) => {
+    setLang(value);
+    void savePreferencePatch({ defaultLang: value });
+  };
+
+  const handleAccentChange = (value: Accent) => {
+    setAccent(value);
+    void savePreferencePatch({ defaultAccent: value });
   };
 
   return (
@@ -198,7 +261,7 @@ export function SettingsDialog({
           <Section label={t("appearance")}>
             <Segmented<Appearance>
               value={appearance}
-              onChange={setAppearance}
+              onChange={handleAppearanceChange}
               size="sm"
               options={[
                 { value: "light", label: <><SunIcon size={15} />{t("light")}</> },
@@ -214,7 +277,7 @@ export function SettingsDialog({
           <Section label={t("view")}>
             <Segmented<ViewMode>
               value={view}
-              onChange={setView}
+              onChange={handleViewChange}
               size="sm"
               options={[
                 {
@@ -229,7 +292,7 @@ export function SettingsDialog({
           <Section label={t("columns")}>
             <Segmented<Columns>
               value={columns}
-              onChange={setColumns}
+              onChange={handleColumnsChange}
               size="sm"
               options={[
                 { value: 4, label: "4" },
@@ -241,7 +304,7 @@ export function SettingsDialog({
           <Section label={t("cardStyle")}>
             <Segmented<Surface>
               value={surface}
-              onChange={setSurface}
+              onChange={handleSurfaceChange}
               size="sm"
               options={[
                 { value: "solid", label: t("solid") },
@@ -253,7 +316,7 @@ export function SettingsDialog({
           <Section label={t("overviewInfo")}>
             <Segmented<OverviewVisibility>
               value={overview}
-              onChange={setOverview}
+              onChange={handleOverviewChange}
               size="sm"
               options={[
                 { value: "show", label: t("show") },
@@ -349,7 +412,7 @@ export function SettingsDialog({
           <Section label={t("language")}>
             <Segmented<Lang>
               value={lang}
-              onChange={setLang}
+              onChange={handleLangChange}
               size="sm"
               options={[
                 { value: "zh-CN", label: "中文" },
@@ -364,7 +427,7 @@ export function SettingsDialog({
                 <button
                   key={a}
                   type="button"
-                  onClick={() => setAccent(a)}
+                  onClick={() => handleAccentChange(a)}
                   aria-label={a}
                   title={a}
                   className={cn(
@@ -386,6 +449,21 @@ export function SettingsDialog({
               ))}
             </div>
           </Section>
+
+          {savingPreferences || preferencesStatus ? (
+            <div
+              className={cn(
+                "text-xs",
+                preferencesStatus === "error" ? "text-kumo-danger" : "text-kumo-success",
+              )}
+            >
+              {savingPreferences
+                ? t("saving")
+                : preferencesStatus === "saved"
+                  ? t("saved")
+                  : t("saveFailed")}
+            </div>
+          ) : null}
         </div>
       </Dialog>
     </Dialog.Root>

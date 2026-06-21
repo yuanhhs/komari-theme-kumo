@@ -129,6 +129,8 @@ interface SettingsContextValue {
     accent?: Accent;
     columns?: Columns;
     surface?: Surface;
+    overview?: OverviewVisibility;
+    lang?: Lang;
     backgroundBrightness?: BackgroundBrightness;
   }) => void;
   t: (key: TKey, vars?: Record<string, string | number>) => string;
@@ -268,6 +270,8 @@ export function Providers({ children }: { children: ReactNode }) {
       accent?: Accent;
       columns?: Columns;
       surface?: Surface;
+      overview?: OverviewVisibility;
+      lang?: Lang;
       backgroundBrightness?: BackgroundBrightness;
     }) => {
       if (d.appearance && readLS(LS.appearance) === null) setAppearance(d.appearance);
@@ -275,11 +279,22 @@ export function Providers({ children }: { children: ReactNode }) {
       if (d.accent && readLS(LS.accent) === null) setAccent(d.accent);
       if (d.columns && readLS(LS.columns) === null) setColumns(d.columns);
       if (d.surface && readLS(LS.surface) === null) setSurface(d.surface);
+      if (d.overview && readLS(LS.overview) === null) setOverview(d.overview);
+      if (d.lang && readLS(LS.lang) === null) setLang(d.lang);
       if (d.backgroundBrightness && readLS(LS.backgroundBrightness) === null) {
         setBackgroundBrightness(d.backgroundBrightness);
       }
     },
-    [setAppearance, setView, setAccent, setColumns, setSurface, setBackgroundBrightness],
+    [
+      setAppearance,
+      setView,
+      setAccent,
+      setColumns,
+      setSurface,
+      setOverview,
+      setLang,
+      setBackgroundBrightness,
+    ],
   );
 
   const t = useCallback(

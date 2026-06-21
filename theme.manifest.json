@@ -48,12 +48,26 @@
         "default": "default",
         "name": { "zh-CN": "主题色", "en": "Accent color" }
       },
+      {
+        "key": "defaultLang",
+        "type": "select",
+        "options": "zh-CN,en",
+        "default": "zh-CN",
+        "name": { "zh-CN": "默认语言", "en": "Default language" }
+      },
       { "type": "title", "name": { "zh-CN": "显示", "en": "Display" } },
       {
         "key": "enableGroupTabs",
         "type": "switch",
         "default": true,
         "name": { "zh-CN": "显示分组筛选", "en": "Show group filter" }
+      },
+      {
+        "key": "overviewVisibility",
+        "type": "select",
+        "options": "show,hide",
+        "default": "show",
+        "name": { "zh-CN": "总览信息", "en": "Overview info" }
       },
       {
         "key": "backgroundUrl",

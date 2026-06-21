@@ -8,8 +8,10 @@ import type {
   Columns,
   Surface,
   ViewMode,
+  OverviewVisibility,
 } from "@/components/providers";
 import { isSafeResourceUrl } from "@/lib/sanitize";
+import type { Lang } from "@/lib/i18n";
 
 export interface ThemeOptions {
   footerNote: string;
@@ -23,6 +25,8 @@ export interface ThemeOptions {
   defaultAccent?: Accent;
   defaultColumns?: Columns;
   defaultSurface?: Surface;
+  defaultLang?: Lang;
+  defaultOverview?: OverviewVisibility;
 }
 
 function asString(v: unknown, fallback = ""): string {
@@ -50,6 +54,8 @@ function asBrightness(v: unknown): BackgroundBrightness | undefined {
 const VIEWS: ViewMode[] = ["grid", "list"];
 const APPEARANCES: Appearance[] = ["light", "dark", "system"];
 const ACCENTS: Accent[] = ["default", "blue", "violet", "emerald", "rose", "cyan"];
+const LANGS: Lang[] = ["zh-CN", "en"];
+const OVERVIEWS: OverviewVisibility[] = ["show", "hide"];
 
 export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
   const s = (info?.theme_settings ?? {}) as Record<string, unknown>;
@@ -58,6 +64,8 @@ export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
   const accent = asString(s.defaultAccent);
   const columns = asString(s.defaultColumns);
   const cardStyle = asString(s.cardStyle);
+  const lang = asString(s.defaultLang);
+  const overview = asString(s.overviewVisibility);
   return {
     footerNote: asString(s.footerNote),
     backgroundUrl: asResourceUrl(s.backgroundUrl),
@@ -71,5 +79,9 @@ export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
     defaultColumns: columns === "4" || columns === "5" ? (Number(columns) as Columns) : undefined,
     defaultSurface:
       cardStyle === "solid" || cardStyle === "glass" ? (cardStyle as Surface) : undefined,
+    defaultLang: LANGS.includes(lang as Lang) ? (lang as Lang) : undefined,
+    defaultOverview: OVERVIEWS.includes(overview as OverviewVisibility)
+      ? (overview as OverviewVisibility)
+      : undefined,
   };
 }

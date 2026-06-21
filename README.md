@@ -109,7 +109,9 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 | `defaultColumns` | select | `4` | 网格视图宽屏下每行列数（4 / 5） |
 | `cardStyle` | select | `solid` | 卡片样式：实心 / 磨砂 |
 | `defaultAccent` | select | `default` | 强调色 |
+| `defaultLang` | select | `zh-CN` | 默认语言 |
 | `enableGroupTabs` | switch | `true` | 显示分组筛选 |
+| `overviewVisibility` | select | `show` | 显示或隐藏总览信息 |
 | `backgroundUrl` | string | — | 页面背景图 |
 | `backgroundBrightness` | select | `100` | 页面背景亮度 |
 | `footerNote` | richtext | — | 显示在 Powered-by 上方的 HTML |
@@ -117,8 +119,8 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 本地静态图片默认放在 `public/assets/`，在设置里使用 `/assets/文件名` 作为背景路径；
 打包后该目录会保留为主题包内的 `dist/assets/`。
 
-访客偏好优先级高于管理员默认值。外观、语言、视图、列数、卡片样式、强调色等轻量设置存储在
-`localStorage`。背景图片地址与背景亮度保存到 Komari 的 `theme_settings` 后随站点持久化，换浏览器也会生效；上传图片时会按原图读成 data URL 保存，不做压缩或格式转换。
+外观、语言、视图、列数、卡片样式、总览显示、强调色、背景图片地址与背景亮度保存到 Komari 的
+`theme_settings` 后随站点持久化，换浏览器也会生效；上传图片时会按原图读成 data URL 保存，不做压缩或格式转换。
 
 ## 项目结构
 
