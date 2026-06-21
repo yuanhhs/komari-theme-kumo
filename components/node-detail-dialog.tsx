@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Dialog, Badge, cn } from "@cloudflare/kumo";
 import { XIcon } from "@phosphor-icons/react";
 import {
@@ -40,15 +40,6 @@ type Range = "1" | "6" | "24";
 type MotionPhase = "idle" | "entering" | "open" | "closing";
 
 const DETAIL_MOTION_MS = 240;
-
-function motionVars(origin: DOMRect, target: DOMRect): CSSProperties {
-  return {
-    "--detail-x": `${origin.left - target.left}px`,
-    "--detail-y": `${origin.top - target.top}px`,
-    "--detail-scale-x": String(Math.max(0.08, origin.width / target.width)),
-    "--detail-scale-y": String(Math.max(0.08, origin.height / target.height)),
-  } as CSSProperties;
-}
 
 function Chip({ label, value, icon }: { label: string; value: ReactNode; icon?: ReactNode }) {
   return (
@@ -125,16 +116,8 @@ export function NodeDetailDialog({
   const { t, mode, lang } = useSettings();
   const [range, setRange] = useState<Range>("6");
   const [motionPhase, setMotionPhase] = useState<MotionPhase>("idle");
-  const [motionStyle, setMotionStyle] = useState<CSSProperties>({});
   const hours = Number(range);
   const uuid = view?.node.uuid;
-  const originKey = useMemo(
-    () =>
-      origin
-        ? `${origin.left}:${origin.top}:${origin.width}:${origin.height}`
-        : "none",
-    [origin],
-  );
 
   const loadQuery = useLoadRecords(uuid, hours, "all", open && !!uuid);
   const pingQuery = usePingRecords(uuid, hours, open && !!uuid);
@@ -143,51 +126,23 @@ export function NodeDetailDialog({
   useEffect(() => {
     if (!open) {
       setMotionPhase("idle");
-      setMotionStyle({});
       return;
     }
 
-    if (!origin) {
-      setMotionPhase("open");
-      setMotionStyle({});
-      return;
-    }
-
-    let measureFrame = 0;
     let openFrame = 0;
     setMotionPhase("entering");
-    measureFrame = requestAnimationFrame(() => {
-      const panel = document.querySelector<HTMLElement>(".node-detail-motion-panel");
-      if (!panel) {
-        setMotionPhase("open");
-        return;
-      }
-      setMotionStyle(motionVars(origin, panel.getBoundingClientRect()));
-      openFrame = requestAnimationFrame(() => setMotionPhase("open"));
-    });
+    openFrame = requestAnimationFrame(() => setMotionPhase("open"));
 
     return () => {
-      cancelAnimationFrame(measureFrame);
       cancelAnimationFrame(openFrame);
     };
-  }, [open, origin, originKey]);
+  }, [open]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
       onOpenChange(true);
       return;
     }
-    if (!origin) {
-      onOpenChange(false);
-      return;
-    }
-
-    const panel = document.querySelector<HTMLElement>(".node-detail-motion-panel");
-    if (!panel) {
-      onOpenChange(false);
-      return;
-    }
-    setMotionStyle(motionVars(origin, panel.getBoundingClientRect()));
     setMotionPhase("closing");
     window.setTimeout(() => onOpenChange(false), DETAIL_MOTION_MS);
   };
@@ -297,7 +252,6 @@ export function NodeDetailDialog({
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog
         size="xl"
-        style={motionStyle}
         className={cn(
           "node-detail-motion-panel w-full max-w-4xl p-0",
           motionPhase === "entering" && "node-detail-motion-from",

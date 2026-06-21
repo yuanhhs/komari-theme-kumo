@@ -53,7 +53,7 @@ export function UsageBar({
     >
       <div
         className={cn(
-          "h-full rounded-full transition-[width] duration-500 ease-out",
+          "h-full rounded-full transition-[width] duration-300 ease-out",
           FILL_BY_LEVEL[level],
         )}
         style={{ width: `${width}%` }}
