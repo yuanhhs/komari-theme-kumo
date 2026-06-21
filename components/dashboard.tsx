@@ -54,7 +54,16 @@ function CenteredState({
 }
 
 export function Dashboard() {
-  const { t, view, columns, overview, background, backgroundType, seedDefaults } = useSettings();
+  const {
+    t,
+    view,
+    columns,
+    overview,
+    background,
+    backgroundType,
+    backgroundBrightness,
+    seedDefaults,
+  } = useSettings();
   const { views, isLoading, error, lastUpdated, refresh } = useDashboard();
   const { data: info } = usePublicInfo();
   const { data: version } = useVersion();
@@ -133,12 +142,16 @@ export function Dashboard() {
             loop
             muted
             playsInline
+            style={{ filter: `brightness(${backgroundBrightness}%)` }}
           />
         ) : (
           <div
             aria-hidden
             className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url("${bgUrl}")` }}
+            style={{
+              backgroundImage: `url("${bgUrl}")`,
+              filter: `brightness(${backgroundBrightness}%)`,
+            }}
           />
         )
       ) : null}

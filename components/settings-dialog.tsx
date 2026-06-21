@@ -14,6 +14,7 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react";
 import { Segmented } from "@/components/ui/segmented";
+import { BackgroundBrightnessSlider } from "@/components/background-brightness-slider";
 import {
   useSettings,
   ACCENT_KEYS,
@@ -72,6 +73,8 @@ export function SettingsDialog({
     setOverview,
     background,
     backgroundType,
+    backgroundBrightness,
+    setBackgroundBrightness,
     backgroundImageUrl,
     setBackgroundImageUrl,
     backgroundVideoUrl,
@@ -233,6 +236,14 @@ export function SettingsDialog({
                 placeholder={t("backgroundVideoUrl")}
                 aria-label={t("backgroundVideoUrl")}
                 className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
+              />
+            </div>
+            <div className="mt-3 space-y-2">
+              <BackgroundBrightnessSlider
+                value={backgroundBrightness}
+                onChange={setBackgroundBrightness}
+                label={t("backgroundBrightness")}
+                enabled={open}
               />
             </div>
           </Section>

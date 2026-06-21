@@ -3,11 +3,20 @@
 import useSWR from "swr";
 import { komari, type LoadMetric } from "@/lib/rpc2";
 import { buildNodeViews } from "@/lib/aggregate";
+import type { MeInfo } from "@/lib/types";
 
 /** Live status polls fast; node metadata and site config change rarely. */
 const LIVE_INTERVAL = 2000;
 const NODES_INTERVAL = 30_000;
 const CONFIG_INTERVAL = 60_000;
+const DEV_ME: MeInfo = {
+  "2fa_enabled": false,
+  logged_in: true,
+  sso_id: "",
+  sso_type: "development",
+  username: "dev",
+  uuid: "development",
+};
 
 export function usePublicInfo() {
   return useSWR("public-info", () => komari.getPublicInfo(), {
@@ -35,22 +44,16 @@ export function useMe() {
         return me;
       } catch (error) {
         if (process.env.NODE_ENV === "development") {
-          return {
-            "2fa_enabled": false,
-            logged_in: true,
-            sso_id: "",
-            sso_type: "development",
-            username: "dev",
-            uuid: "development",
-          };
+          return DEV_ME;
         }
         throw error;
       }
     },
     {
-    revalidateOnFocus: false,
-    refreshInterval: CONFIG_INTERVAL,
-    shouldRetryOnError: false,
+      fallbackData: process.env.NODE_ENV === "development" ? DEV_ME : undefined,
+      revalidateOnFocus: false,
+      refreshInterval: CONFIG_INTERVAL,
+      shouldRetryOnError: false,
     },
   );
 }

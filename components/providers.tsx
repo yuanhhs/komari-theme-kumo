@@ -35,6 +35,7 @@ export type Surface = "solid" | "glass";
 export type OverviewVisibility = "show" | "hide";
 /** Kind of the custom background media. */
 export type BackgroundKind = "image" | "video";
+export type BackgroundBrightness = 20 | 40 | 60 | 80 | 100;
 
 /** Accent overrides for `--color-kumo-brand`; `light-dark()` keeps both modes correct. */
 const ACCENTS: Record<Exclude<Accent, "default">, { brand: string; hover: string }> = {
@@ -79,6 +80,7 @@ const LS = {
   overview: "kumo-overview",
   backgroundImageUrl: "kumo-background-image-url",
   backgroundVideoUrl: "kumo-background-video-url",
+  backgroundBrightness: "kumo-background-brightness",
 } as const;
 
 function readLS(key: string): string | null {
@@ -96,6 +98,11 @@ function writeLS(key: string, value: string) {
   } catch {
     /* storage may be unavailable (private mode, etc.) */
   }
+}
+
+function parseBackgroundBrightness(value: string | null): BackgroundBrightness {
+  const n = Number(value);
+  return n === 20 || n === 40 || n === 60 || n === 80 || n === 100 ? n : 100;
 }
 
 interface SettingsContextValue {
@@ -119,6 +126,8 @@ interface SettingsContextValue {
   background: string;
   /** Kind of the visitor background, for choosing <img>/<video> rendering. */
   backgroundType: "" | BackgroundKind;
+  backgroundBrightness: BackgroundBrightness;
+  setBackgroundBrightness: (value: BackgroundBrightness) => void;
   backgroundImageUrl: string;
   setBackgroundImageUrl: (url: string) => void;
   backgroundVideoUrl: string;
@@ -151,6 +160,8 @@ export function Providers({ children }: { children: ReactNode }) {
   const [overview, setOverviewState] = useState<OverviewVisibility>("show");
   const [background, setBackgroundState] = useState<string>("");
   const [backgroundType, setBackgroundType] = useState<"" | BackgroundKind>("");
+  const [backgroundBrightness, setBackgroundBrightnessState] =
+    useState<BackgroundBrightness>(100);
   const [backgroundImageUrl, setBackgroundImageUrlState] = useState("");
   const [backgroundVideoUrl, setBackgroundVideoUrlState] = useState("");
   const [systemDark, setSystemDark] = useState(false);
@@ -172,6 +183,7 @@ export function Providers({ children }: { children: ReactNode }) {
     if (sf === "solid" || sf === "glass") setSurfaceState(sf);
     const ov = readLS(LS.overview);
     if (ov === "show" || ov === "hide") setOverviewState(ov);
+    setBackgroundBrightnessState(parseBackgroundBrightness(readLS(LS.backgroundBrightness)));
     const imageUrl = readLS(LS.backgroundImageUrl)?.trim() ?? "";
     const videoUrl = readLS(LS.backgroundVideoUrl)?.trim() ?? "";
     setBackgroundImageUrlState(imageUrl);
@@ -271,6 +283,10 @@ export function Providers({ children }: { children: ReactNode }) {
   const setOverview = useCallback((v: OverviewVisibility) => {
     setOverviewState(v);
     writeLS(LS.overview, v);
+  }, []);
+  const setBackgroundBrightness = useCallback((value: BackgroundBrightness) => {
+    setBackgroundBrightnessState(value);
+    writeLS(LS.backgroundBrightness, String(value));
   }, []);
   const setBackgroundImageUrl = useCallback((url: string) => {
     const next = url.trim();
@@ -376,6 +392,8 @@ export function Providers({ children }: { children: ReactNode }) {
       setOverview,
       background,
       backgroundType,
+      backgroundBrightness,
+      setBackgroundBrightness,
       backgroundImageUrl,
       setBackgroundImageUrl,
       backgroundVideoUrl,
@@ -386,7 +404,7 @@ export function Providers({ children }: { children: ReactNode }) {
       t,
       mounted,
     }),
-    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundType, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, setBackgroundFile, clearBackground, seedDefaults, t, mounted],
+    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundType, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, setBackgroundFile, clearBackground, seedDefaults, t, mounted],
   );
 
   return (
