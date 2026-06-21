@@ -161,7 +161,7 @@ export function Dashboard() {
           </div>
         ) : (
           <>
-            <StatsBar stats={stats} />
+            <StatsBar stats={stats} views={views} />
             <Toolbar
               search={search}
               onSearch={setSearch}

@@ -2,28 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@cloudflare/kumo";
-
-/**
- * Komari's `region` is a flag emoji (e.g. "🇺🇸"). Windows/Chrome can't render
- * regional-indicator emoji as flags (they show as "US"), so we convert the
- * emoji to an ISO 3166-1 alpha-2 code and render a real flag image, with the
- * original string as a text fallback.
- */
-function regionToCode(region: string): string | null {
-  const chars = [...region];
-  if (chars.length >= 2) {
-    const a = chars[0].codePointAt(0) ?? 0;
-    const b = chars[1].codePointAt(0) ?? 0;
-    if (a >= 0x1f1e6 && a <= 0x1f1ff && b >= 0x1f1e6 && b <= 0x1f1ff) {
-      return (
-        String.fromCharCode(a - 0x1f1e6 + 97) + String.fromCharCode(b - 0x1f1e6 + 97)
-      );
-    }
-  }
-  const trimmed = region.trim().toLowerCase();
-  if (/^[a-z]{2}$/.test(trimmed)) return trimmed;
-  return null;
-}
+import { regionToCode } from "@/lib/region";
 
 export function RegionFlag({
   region,

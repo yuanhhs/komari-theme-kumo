@@ -7,9 +7,11 @@ import {
   SunIcon,
   MoonIcon,
   CloudIcon,
+  SignInIcon,
 } from "@phosphor-icons/react";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { useSettings } from "@/components/providers";
+import { useMe } from "@/hooks/useKomari";
 import { secondsSince } from "@/lib/format";
 import { relativeFromSeconds } from "@/lib/i18n";
 import type { PublicInfo, VersionInfo } from "@/lib/types";
@@ -26,6 +28,8 @@ export function SiteHeader({
   lastUpdated?: string;
 }) {
   const { t, lang, mode, appearance, setAppearance } = useSettings();
+  const { data: me } = useMe();
+  const loggedIn = !!me?.logged_in;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
@@ -76,18 +80,33 @@ export function SiteHeader({
             aria-label={t("appearance")}
             onClick={toggleMode}
           />
-          <Button
-            variant="ghost"
-            size="sm"
-            shape="square"
-            icon={GearIcon}
-            aria-label={t("settings")}
-            onClick={() => setSettingsOpen(true)}
-          />
+          {loggedIn ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              shape="square"
+              icon={GearIcon}
+              aria-label={t("settings")}
+              onClick={() => setSettingsOpen(true)}
+            />
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              shape="square"
+              icon={SignInIcon}
+              aria-label={t("login")}
+              onClick={() => {
+                window.location.href = "/admin";
+              }}
+            />
+          )}
         </div>
       </div>
 
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      {loggedIn ? (
+        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      ) : null}
     </header>
   );
 }

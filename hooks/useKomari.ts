@@ -22,6 +22,15 @@ export function useVersion() {
   });
 }
 
+/** Current viewer's auth state (`logged_in`). Errors are treated as logged-out. */
+export function useMe() {
+  return useSWR("me", () => komari.getMe(), {
+    revalidateOnFocus: false,
+    refreshInterval: CONFIG_INTERVAL,
+    shouldRetryOnError: false,
+  });
+}
+
 export function useNodes() {
   return useSWR("nodes", () => komari.getNodes(), {
     refreshInterval: NODES_INTERVAL,
