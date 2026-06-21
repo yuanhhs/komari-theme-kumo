@@ -1,6 +1,7 @@
 name: Build theme
 
-# Auto-build on every update: pushes to main, version tags, PRs, or manual run.
+# Auto-build on every update. Main pushes publish a rolling latest release;
+# version tags publish immutable version releases.
 on:
   push:
     branches: [main]
@@ -46,30 +47,57 @@ jobs:
           path: komari-theme-kumo.zip
           if-no-files-found: error
 
-  # On a vX.Y.Z tag push, publish a GitHub Release with the packaged zip attached.
-  release:
+  latest-release:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download theme zip
+        uses: actions/download-artifact@v4
+        with:
+          name: komari-theme-kumo
+
+      - name: Publish latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/latest" \
+            --method PATCH \
+            --field "sha=${GITHUB_SHA}" \
+            --field "force=true" \
+          || gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+            --method POST \
+            --field "ref=refs/tags/latest" \
+            --field "sha=${GITHUB_SHA}"
+
+          gh release create latest komari-theme-kumo.zip \
+            --title "Latest build" \
+            --notes "Automated build from ${GITHUB_SHA}." \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+          || {
+            gh release edit latest \
+              --title "Latest build" \
+              --notes "Automated build from ${GITHUB_SHA}." \
+              --prerelease
+            gh release upload latest komari-theme-kumo.zip --clobber
+          }
+
+  version-release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Download theme zip
+        uses: actions/download-artifact@v4
         with:
-          node-version: "20"
-          cache: npm
+          name: komari-theme-kumo
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build theme package
-        run: npm run build:theme
-
-      - name: Publish release
+      - name: Publish version release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
