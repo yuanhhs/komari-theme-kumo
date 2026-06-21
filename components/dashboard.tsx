@@ -62,6 +62,7 @@ export function Dashboard() {
     background,
     backgroundType,
     backgroundBrightness,
+    logo,
     seedDefaults,
   } = useSettings();
   const { views, isLoading, error, lastUpdated, refresh } = useDashboard();
@@ -159,7 +160,7 @@ export function Dashboard() {
       <SiteHeader
         info={info}
         version={version}
-        logoUrl={options.logoUrl}
+        logoUrl={logo || options.logoUrl}
         lastUpdated={lastUpdated}
         search={search}
         onSearch={setSearch}

@@ -9,7 +9,8 @@
 
 const DB_NAME = "kumo-theme";
 const STORE = "kv";
-const KEY = "background";
+const BACKGROUND_KEY = "background";
+const LOGO_KEY = "logo";
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -41,24 +42,48 @@ function run<T>(
 
 /** The persisted background blob (image/video), or null when none / unavailable. */
 export async function loadBackgroundBlob(): Promise<Blob | null> {
+  return loadBlob(BACKGROUND_KEY);
+}
+
+export async function saveBackgroundBlob(blob: Blob): Promise<void> {
+  return saveBlob(BACKGROUND_KEY, blob);
+}
+
+export async function clearBackgroundBlob(): Promise<void> {
+  return clearBlob(BACKGROUND_KEY);
+}
+
+export async function loadLogoBlob(): Promise<Blob | null> {
+  return loadBlob(LOGO_KEY);
+}
+
+export async function saveLogoBlob(blob: Blob): Promise<void> {
+  return saveBlob(LOGO_KEY, blob);
+}
+
+export async function clearLogoBlob(): Promise<void> {
+  return clearBlob(LOGO_KEY);
+}
+
+async function loadBlob(key: string): Promise<Blob | null> {
   if (typeof indexedDB === "undefined") return null;
   try {
-    const value = await run<Blob | undefined>("readonly", (s) => s.get(KEY));
+    const value = await run<Blob | undefined>("readonly", (s) => s.get(key));
     return value instanceof Blob ? value : null;
   } catch {
     return null;
   }
 }
 
-export async function saveBackgroundBlob(blob: Blob): Promise<void> {
+async function saveBlob(key: string, blob: Blob): Promise<void> {
   if (typeof indexedDB === "undefined") throw new Error("IndexedDB unavailable");
-  await run("readwrite", (s) => s.put(blob, KEY));
+  await run("readwrite", (s) => s.put(blob, key));
 }
 
-export async function clearBackgroundBlob(): Promise<void> {
+async function clearBlob(key: string): Promise<void> {
   if (typeof indexedDB === "undefined") return;
   try {
-    await run("readwrite", (s) => s.delete(KEY));
+    await run("readwrite", (s) => s.delete(key));
   } catch {
     /* ignore */
   }

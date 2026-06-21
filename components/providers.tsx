@@ -21,6 +21,9 @@ import {
   loadBackgroundBlob,
   saveBackgroundBlob,
   clearBackgroundBlob,
+  loadLogoBlob,
+  saveLogoBlob,
+  clearLogoBlob,
 } from "@/lib/bg-store";
 import { isSafeResourceUrl } from "@/lib/sanitize";
 
@@ -81,6 +84,7 @@ const LS = {
   backgroundImageUrl: "kumo-background-image-url",
   backgroundVideoUrl: "kumo-background-video-url",
   backgroundBrightness: "kumo-background-brightness",
+  logoUrl: "kumo-logo-url",
 } as const;
 
 function readLS(key: string): string | null {
@@ -136,6 +140,12 @@ interface SettingsContextValue {
   setBackgroundFile: (file: File) => Promise<void>;
   /** Remove the visitor background. */
   clearBackground: () => void;
+  /** Visitor logo as URL/object URL; overrides the admin default locally. */
+  logo: string;
+  logoUrl: string;
+  setLogoUrl: (url: string) => void;
+  setLogoFile: (blob: Blob) => Promise<void>;
+  clearLogo: () => void;
   /** Apply admin-provided defaults for any pref the user has not set. */
   seedDefaults: (d: {
     appearance?: Appearance;
@@ -164,6 +174,8 @@ export function Providers({ children }: { children: ReactNode }) {
     useState<BackgroundBrightness>(100);
   const [backgroundImageUrl, setBackgroundImageUrlState] = useState("");
   const [backgroundVideoUrl, setBackgroundVideoUrlState] = useState("");
+  const [logo, setLogoState] = useState("");
+  const [logoUrl, setLogoUrlState] = useState("");
   const [systemDark, setSystemDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -186,8 +198,10 @@ export function Providers({ children }: { children: ReactNode }) {
     setBackgroundBrightnessState(parseBackgroundBrightness(readLS(LS.backgroundBrightness)));
     const imageUrl = readLS(LS.backgroundImageUrl)?.trim() ?? "";
     const videoUrl = readLS(LS.backgroundVideoUrl)?.trim() ?? "";
+    const nextLogoUrl = readLS(LS.logoUrl)?.trim() ?? "";
     setBackgroundImageUrlState(imageUrl);
     setBackgroundVideoUrlState(videoUrl);
+    setLogoUrlState(nextLogoUrl);
     if (videoUrl && isSafeResourceUrl(videoUrl)) {
       setBackgroundState(videoUrl);
       setBackgroundType("video");
@@ -195,6 +209,7 @@ export function Providers({ children }: { children: ReactNode }) {
       setBackgroundState(imageUrl);
       setBackgroundType("image");
     }
+    if (nextLogoUrl && isSafeResourceUrl(nextLogoUrl)) setLogoState(nextLogoUrl);
     setMounted(true);
   }, []);
 
@@ -210,6 +225,22 @@ export function Providers({ children }: { children: ReactNode }) {
       objectUrl = URL.createObjectURL(blob);
       setBackgroundState(objectUrl);
       setBackgroundType(blob.type.startsWith("video") ? "video" : "image");
+    });
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, []);
+
+  // Load the persisted custom logo from IndexedDB unless a local logo URL is set.
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    const nextLogoUrl = readLS(LS.logoUrl)?.trim() ?? "";
+    if (isSafeResourceUrl(nextLogoUrl)) return;
+
+    loadLogoBlob().then((blob) => {
+      if (!blob) return;
+      objectUrl = URL.createObjectURL(blob);
+      setLogoState(objectUrl);
     });
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
@@ -324,6 +355,16 @@ export function Providers({ children }: { children: ReactNode }) {
           : "",
     );
   }, [backgroundImageUrl]);
+  const setLogoUrl = useCallback((url: string) => {
+    const next = url.trim();
+    void clearLogoBlob();
+    setLogoUrlState(next);
+    writeLS(LS.logoUrl, next);
+    setLogoState((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return next && isSafeResourceUrl(next) ? next : "";
+    });
+  }, []);
   const setBackgroundFile = useCallback(async (file: File) => {
     await saveBackgroundBlob(file);
     setBackgroundImageUrlState("");
@@ -348,6 +389,25 @@ export function Providers({ children }: { children: ReactNode }) {
       return "";
     });
     setBackgroundType("");
+  }, []);
+  const setLogoFile = useCallback(async (blob: Blob) => {
+    await saveLogoBlob(blob);
+    setLogoUrlState("");
+    writeLS(LS.logoUrl, "");
+    const url = URL.createObjectURL(blob);
+    setLogoState((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return url;
+    });
+  }, []);
+  const clearLogo = useCallback(() => {
+    void clearLogoBlob();
+    setLogoUrlState("");
+    writeLS(LS.logoUrl, "");
+    setLogoState((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return "";
+    });
   }, []);
 
   const seedDefaults = useCallback(
@@ -400,11 +460,16 @@ export function Providers({ children }: { children: ReactNode }) {
       setBackgroundVideoUrl,
       setBackgroundFile,
       clearBackground,
+      logo,
+      logoUrl,
+      setLogoUrl,
+      setLogoFile,
+      clearLogo,
       seedDefaults,
       t,
       mounted,
     }),
-    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundType, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, setBackgroundFile, clearBackground, seedDefaults, t, mounted],
+    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundType, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, setBackgroundFile, clearBackground, logo, logoUrl, setLogoUrl, setLogoFile, clearLogo, seedDefaults, t, mounted],
   );
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Dialog, Button, cn } from "@cloudflare/kumo";
 import {
   SunIcon,
@@ -15,6 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import { Segmented } from "@/components/ui/segmented";
 import { BackgroundBrightnessSlider } from "@/components/background-brightness-slider";
+import { LogoCropper } from "@/components/logo-cropper";
 import {
   useSettings,
   ACCENT_KEYS,
@@ -81,9 +82,16 @@ export function SettingsDialog({
     setBackgroundVideoUrl,
     setBackgroundFile,
     clearBackground,
+    logo,
+    logoUrl,
+    setLogoUrl,
+    setLogoFile,
+    clearLogo,
   } = useSettings();
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const [logoCropFile, setLogoCropFile] = useState<File | null>(null);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -168,6 +176,74 @@ export function SettingsDialog({
                 { value: "hide", label: t("hide") },
               ]}
             />
+          </Section>
+
+          <Section label={t("logo")}>
+            <input
+              ref={logoFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setLogoCropFile(file);
+                if (logoFileRef.current) logoFileRef.current.value = "";
+              }}
+            />
+            <div className="flex items-center gap-3">
+              <Button variant="secondary" size="sm" onClick={() => logoFileRef.current?.click()}>
+                <ImageIcon size={15} />
+                {t("uploadLogo")}
+              </Button>
+              {logo ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={logo}
+                    alt=""
+                    className="border-kumo-hairline h-9 w-9 shrink-0 rounded-lg border object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => clearLogo()}
+                    className="text-kumo-subtle hover:text-kumo-danger inline-flex items-center gap-1 text-xs transition-colors"
+                  >
+                    <TrashIcon size={14} />
+                    {t("removeLogo")}
+                  </button>
+                </>
+              ) : null}
+            </div>
+            <div className="mt-3">
+              <input
+                value={logoUrl}
+                onChange={(e) => setLogoUrl(e.target.value)}
+                placeholder={t("logoUrl")}
+                aria-label={t("logoUrl")}
+                className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
+              />
+            </div>
+            {logoCropFile ? (
+              <div className="mt-3">
+                <LogoCropper
+                  file={logoCropFile}
+                  onCancel={() => setLogoCropFile(null)}
+                  onApply={async (blob) => {
+                    await setLogoFile(blob);
+                    setLogoCropFile(null);
+                  }}
+                  labels={{
+                    cropLogo: t("cropLogo"),
+                    apply: t("apply"),
+                    cancel: t("cancel"),
+                    zoom: t("zoom"),
+                    horizontal: t("horizontal"),
+                    vertical: t("vertical"),
+                  }}
+                />
+              </div>
+            ) : null}
           </Section>
 
           <Section label={t("background")}>

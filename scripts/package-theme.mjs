@@ -94,6 +94,7 @@ log("verified required <title> / description placeholders");
 rmSync(THEME, { recursive: true, force: true });
 mkdirSync(THEME, { recursive: true });
 cpSync(OUT, DIST, { recursive: true });
+mkdirSync(join(DIST, "assets"), { recursive: true });
 writeFileSync(join(THEME, "komari-theme.json"), JSON.stringify(manifest, null, 2));
 
 const previewSrc = p(".preview", "preview.png");

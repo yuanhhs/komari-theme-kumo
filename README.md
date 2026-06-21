@@ -115,6 +115,9 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 | `backgroundUrl` | string | — | 页面背景图 |
 | `footerNote` | richtext | — | 显示在 Powered-by 上方的 HTML |
 
+本地静态图片默认放在 `public/assets/`，在设置里使用 `/assets/文件名` 作为 Logo 或背景路径；
+打包后该目录会保留为主题包内的 `dist/assets/`。
+
 访客偏好（外观、语言、视图、列数、卡片样式、强调色、自定义背景）存储在 `localStorage`
 （`appearance`、`language`、`kumo-view`、`kumo-cols`、`kumo-surface`、`kumo-accent`、`kumo-bg`），
 优先级高于管理员默认值。
