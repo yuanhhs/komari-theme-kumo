@@ -57,8 +57,7 @@ if (stashedRoutes.length > 0) {
 }
 
 function runExport() {
-  // A clean .next/out avoids a flaky "Cannot find module for page: /icon.svg"
-  // error that Next can hit when a stale cache is present.
+  // A clean .next/out avoids stale static-export artifacts between builds.
   rmSync(NEXT, { recursive: true, force: true });
   rmSync(OUT, { recursive: true, force: true });
   execSync("npx next build", {

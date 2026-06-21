@@ -127,7 +127,6 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 ```
 app/                 App Router：layout（标题/描述占位符）、page、globals.css
   api/rpc2/route.ts  仅开发用的代理（静态导出时移除）
-  icon.svg           Favicon
 lib/
   rpc2.ts            带类型的 JSON-RPC2 客户端（POST /api/rpc2）
   types.ts           接口响应类型
