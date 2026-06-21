@@ -17,14 +17,6 @@ import {
   type Lang,
   type TKey,
 } from "@/lib/i18n";
-import {
-  loadBackgroundBlob,
-  saveBackgroundBlob,
-  clearBackgroundBlob,
-  loadLogoBlob,
-  saveLogoBlob,
-  clearLogoBlob,
-} from "@/lib/bg-store";
 import { isSafeResourceUrl } from "@/lib/sanitize";
 
 export type Appearance = "light" | "dark" | "system";
@@ -36,8 +28,6 @@ export type Columns = 4 | 5;
 /** Card surface style: opaque or frosted glass (translucent + backdrop-blur). */
 export type Surface = "solid" | "glass";
 export type OverviewVisibility = "show" | "hide";
-/** Kind of the custom background media. */
-export type BackgroundKind = "image" | "video";
 export type BackgroundBrightness = 20 | 40 | 60 | 80 | 100;
 
 /** Accent overrides for `--color-kumo-brand`; `light-dark()` keeps both modes correct. */
@@ -82,9 +72,7 @@ const LS = {
   surface: "kumo-surface",
   overview: "kumo-overview",
   backgroundImageUrl: "kumo-background-image-url",
-  backgroundVideoUrl: "kumo-background-video-url",
   backgroundBrightness: "kumo-background-brightness",
-  logoUrl: "kumo-logo-url",
 } as const;
 
 function readLS(key: string): string | null {
@@ -126,26 +114,14 @@ interface SettingsContextValue {
   setSurface: (s: Surface) => void;
   overview: OverviewVisibility;
   setOverview: (v: OverviewVisibility) => void;
-  /** Visitor background as an object URL (image or video); overrides the admin default locally. Empty when none. */
+  /** Visitor background URL; overrides the admin default locally. Empty when none. */
   background: string;
-  /** Kind of the visitor background, for choosing <img>/<video> rendering. */
-  backgroundType: "" | BackgroundKind;
   backgroundBrightness: BackgroundBrightness;
   setBackgroundBrightness: (value: BackgroundBrightness) => void;
   backgroundImageUrl: string;
   setBackgroundImageUrl: (url: string) => void;
-  backgroundVideoUrl: string;
-  setBackgroundVideoUrl: (url: string) => void;
-  /** Store an uploaded image/video file as the background (persisted in IndexedDB). */
-  setBackgroundFile: (file: File) => Promise<void>;
   /** Remove the visitor background. */
   clearBackground: () => void;
-  /** Visitor logo as URL/object URL; overrides the admin default locally. */
-  logo: string;
-  logoUrl: string;
-  setLogoUrl: (url: string) => void;
-  setLogoFile: (blob: Blob) => Promise<void>;
-  clearLogo: () => void;
   /** Apply admin-provided defaults for any pref the user has not set. */
   seedDefaults: (d: {
     appearance?: Appearance;
@@ -170,13 +146,9 @@ export function Providers({ children }: { children: ReactNode }) {
   const [surface, setSurfaceState] = useState<Surface>("solid");
   const [overview, setOverviewState] = useState<OverviewVisibility>("show");
   const [background, setBackgroundState] = useState<string>("");
-  const [backgroundType, setBackgroundType] = useState<"" | BackgroundKind>("");
   const [backgroundBrightness, setBackgroundBrightnessState] =
     useState<BackgroundBrightness>(100);
   const [backgroundImageUrl, setBackgroundImageUrlState] = useState("");
-  const [backgroundVideoUrl, setBackgroundVideoUrlState] = useState("");
-  const [logo, setLogoState] = useState("");
-  const [logoUrl, setLogoUrlState] = useState("");
   const [systemDark, setSystemDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -198,54 +170,11 @@ export function Providers({ children }: { children: ReactNode }) {
     if (ov === "show" || ov === "hide") setOverviewState(ov);
     setBackgroundBrightnessState(parseBackgroundBrightness(readLS(LS.backgroundBrightness)));
     const imageUrl = readLS(LS.backgroundImageUrl)?.trim() ?? "";
-    const videoUrl = readLS(LS.backgroundVideoUrl)?.trim() ?? "";
-    const nextLogoUrl = readLS(LS.logoUrl)?.trim() ?? "";
     setBackgroundImageUrlState(imageUrl);
-    setBackgroundVideoUrlState(videoUrl);
-    setLogoUrlState(nextLogoUrl);
-    if (videoUrl && isSafeResourceUrl(videoUrl)) {
-      setBackgroundState(videoUrl);
-      setBackgroundType("video");
-    } else if (imageUrl && isSafeResourceUrl(imageUrl)) {
+    if (imageUrl && isSafeResourceUrl(imageUrl)) {
       setBackgroundState(imageUrl);
-      setBackgroundType("image");
     }
-    if (nextLogoUrl && isSafeResourceUrl(nextLogoUrl)) setLogoState(nextLogoUrl);
     setMounted(true);
-  }, []);
-
-  // Load the persisted custom background (image/video blob) from IndexedDB.
-  useEffect(() => {
-    let objectUrl: string | null = null;
-    const imageUrl = readLS(LS.backgroundImageUrl)?.trim() ?? "";
-    const videoUrl = readLS(LS.backgroundVideoUrl)?.trim() ?? "";
-    if (isSafeResourceUrl(videoUrl) || isSafeResourceUrl(imageUrl)) return;
-
-    loadBackgroundBlob().then((blob) => {
-      if (!blob) return;
-      objectUrl = URL.createObjectURL(blob);
-      setBackgroundState(objectUrl);
-      setBackgroundType(blob.type.startsWith("video") ? "video" : "image");
-    });
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, []);
-
-  // Load the persisted custom logo from IndexedDB unless a local logo URL is set.
-  useEffect(() => {
-    let objectUrl: string | null = null;
-    const nextLogoUrl = readLS(LS.logoUrl)?.trim() ?? "";
-    if (isSafeResourceUrl(nextLogoUrl)) return;
-
-    loadLogoBlob().then((blob) => {
-      if (!blob) return;
-      objectUrl = URL.createObjectURL(blob);
-      setLogoState(objectUrl);
-    });
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
   }, []);
 
   // Track the system color-scheme preference.
@@ -322,93 +251,14 @@ export function Providers({ children }: { children: ReactNode }) {
   }, []);
   const setBackgroundImageUrl = useCallback((url: string) => {
     const next = url.trim();
-    void clearBackgroundBlob();
     setBackgroundImageUrlState(next);
     writeLS(LS.backgroundImageUrl, next);
-    setBackgroundState((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      if (backgroundVideoUrl && isSafeResourceUrl(backgroundVideoUrl)) return backgroundVideoUrl;
-      return next && isSafeResourceUrl(next) ? next : "";
-    });
-    setBackgroundType(
-      backgroundVideoUrl && isSafeResourceUrl(backgroundVideoUrl)
-        ? "video"
-        : next && isSafeResourceUrl(next)
-          ? "image"
-          : "",
-    );
-  }, [backgroundVideoUrl]);
-  const setBackgroundVideoUrl = useCallback((url: string) => {
-    const next = url.trim();
-    void clearBackgroundBlob();
-    setBackgroundVideoUrlState(next);
-    writeLS(LS.backgroundVideoUrl, next);
-    setBackgroundState((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      if (next && isSafeResourceUrl(next)) return next;
-      return backgroundImageUrl && isSafeResourceUrl(backgroundImageUrl) ? backgroundImageUrl : "";
-    });
-    setBackgroundType(
-      next && isSafeResourceUrl(next)
-        ? "video"
-        : backgroundImageUrl && isSafeResourceUrl(backgroundImageUrl)
-          ? "image"
-          : "",
-    );
-  }, [backgroundImageUrl]);
-  const setLogoUrl = useCallback((url: string) => {
-    const next = url.trim();
-    void clearLogoBlob();
-    setLogoUrlState(next);
-    writeLS(LS.logoUrl, next);
-    setLogoState((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return next && isSafeResourceUrl(next) ? next : "";
-    });
-  }, []);
-  const setBackgroundFile = useCallback(async (file: File) => {
-    await saveBackgroundBlob(file);
-    setBackgroundImageUrlState("");
-    setBackgroundVideoUrlState("");
-    writeLS(LS.backgroundImageUrl, "");
-    writeLS(LS.backgroundVideoUrl, "");
-    const url = URL.createObjectURL(file);
-    setBackgroundState((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return url;
-    });
-    setBackgroundType(file.type.startsWith("video") ? "video" : "image");
+    setBackgroundState(next && isSafeResourceUrl(next) ? next : "");
   }, []);
   const clearBackground = useCallback(() => {
-    void clearBackgroundBlob();
     setBackgroundImageUrlState("");
-    setBackgroundVideoUrlState("");
     writeLS(LS.backgroundImageUrl, "");
-    writeLS(LS.backgroundVideoUrl, "");
-    setBackgroundState((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return "";
-    });
-    setBackgroundType("");
-  }, []);
-  const setLogoFile = useCallback(async (blob: Blob) => {
-    await saveLogoBlob(blob);
-    setLogoUrlState("");
-    writeLS(LS.logoUrl, "");
-    const url = URL.createObjectURL(blob);
-    setLogoState((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return url;
-    });
-  }, []);
-  const clearLogo = useCallback(() => {
-    void clearLogoBlob();
-    setLogoUrlState("");
-    writeLS(LS.logoUrl, "");
-    setLogoState((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return "";
-    });
+    setBackgroundState("");
   }, []);
 
   const seedDefaults = useCallback(
@@ -456,25 +306,16 @@ export function Providers({ children }: { children: ReactNode }) {
       overview,
       setOverview,
       background,
-      backgroundType,
       backgroundBrightness,
       setBackgroundBrightness,
       backgroundImageUrl,
       setBackgroundImageUrl,
-      backgroundVideoUrl,
-      setBackgroundVideoUrl,
-      setBackgroundFile,
       clearBackground,
-      logo,
-      logoUrl,
-      setLogoUrl,
-      setLogoFile,
-      clearLogo,
       seedDefaults,
       t,
       mounted,
     }),
-    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundType, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, setBackgroundFile, clearBackground, logo, logoUrl, setLogoUrl, setLogoFile, clearLogo, seedDefaults, t, mounted],
+    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, clearBackground, seedDefaults, t, mounted],
   );
 
   return (

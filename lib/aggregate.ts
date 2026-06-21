@@ -3,8 +3,8 @@
 import type { NodeMap, NodeView, StatusMap } from "./types";
 
 /**
- * Join nodes with their latest status and drop hidden nodes, ordering by
- * ascending `weight` — the same default node order Komari's own frontend uses.
+ * Join nodes with their latest status and drop hidden nodes, preserving the
+ * backend response order.
  */
 export function buildNodeViews(
   nodes: NodeMap | undefined,
@@ -16,8 +16,7 @@ export function buildNodeViews(
     .map((node) => {
       const s = status?.[node.uuid];
       return { node, status: s, online: Boolean(s?.online) } satisfies NodeView;
-    })
-    .sort((a, b) => a.node.weight - b.node.weight);
+    });
 }
 
 export interface DashboardStats {

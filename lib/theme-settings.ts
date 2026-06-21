@@ -12,11 +12,8 @@ import type {
 import { isSafeResourceUrl } from "@/lib/sanitize";
 
 export interface ThemeOptions {
-  siteName: string;
-  logoUrl: string;
   footerNote: string;
   backgroundUrl: string;
-  backgroundVideoUrl: string;
   backgroundBrightness?: BackgroundBrightness;
   /** Show the per-group filter tabs when groups exist. */
   enableGroupTabs: boolean;
@@ -61,13 +58,9 @@ export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
   const accent = asString(s.defaultAccent);
   const columns = asString(s.defaultColumns);
   const cardStyle = asString(s.cardStyle);
-  const hasTitleText = typeof s.titleText === "string";
   return {
-    siteName: hasTitleText ? asString(s.titleText).trim() : asString(s.siteName).trim(),
-    logoUrl: asResourceUrl(s.logoUrl),
     footerNote: asString(s.footerNote),
     backgroundUrl: asResourceUrl(s.backgroundUrl),
-    backgroundVideoUrl: asResourceUrl(s.backgroundVideoUrl),
     backgroundBrightness: asBrightness(s.backgroundBrightness),
     enableGroupTabs: asBool(s.enableGroupTabs, true),
     defaultView: VIEWS.includes(view as ViewMode) ? (view as ViewMode) : undefined,

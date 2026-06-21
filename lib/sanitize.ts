@@ -1,5 +1,6 @@
 const SAFE_TAGS = new Set(["a", "br", "strong", "b", "em", "i", "u", "span"]);
 const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "blob:"]);
+const SAFE_IMAGE_DATA_URL_RE = /^data:image\/(?:png|jpe?g|webp|gif|avif);base64,[a-zA-Z0-9+/]+=*$/;
 const URL_SCHEME_RE = /^[a-zA-Z][a-zA-Z\d+.-]*:/;
 const CSS_URL_UNSAFE_RE = /[\u0000-\u001F\u007F<>"'()\\]/;
 
@@ -7,6 +8,7 @@ export function isSafeResourceUrl(value: string): boolean {
   const url = value.trim();
   if (!url) return false;
   if (CSS_URL_UNSAFE_RE.test(url)) return false;
+  if (SAFE_IMAGE_DATA_URL_RE.test(url)) return true;
   if (url.startsWith("/") && !url.startsWith("//")) return true;
   if (!url.startsWith("//") && !URL_SCHEME_RE.test(url)) return true;
   try {

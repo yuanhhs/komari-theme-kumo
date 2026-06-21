@@ -16,7 +16,6 @@ import {
 } from "@phosphor-icons/react";
 import { Segmented } from "@/components/ui/segmented";
 import { BackgroundBrightnessSlider } from "@/components/background-brightness-slider";
-import { LogoCropper } from "@/components/logo-cropper";
 import {
   useSettings,
   ACCENT_KEYS,
@@ -28,6 +27,7 @@ import {
   type ViewMode,
 } from "@/components/providers";
 import { saveThemeSettings } from "@/lib/admin";
+import { readFileAsDataUrl } from "@/lib/file";
 import type { Lang } from "@/lib/i18n";
 import type { PublicInfo } from "@/lib/types";
 import type { ReactNode } from "react";
@@ -40,6 +40,13 @@ const ACCENT_SWATCH: Record<Accent, string> = {
   rose: "#f43f5e",
   cyan: "#06b6d4",
 };
+const BACKGROUND_IMAGE_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+]);
 
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -78,31 +85,15 @@ export function SettingsDialog({
     overview,
     setOverview,
     background,
-    backgroundType,
     backgroundBrightness,
     setBackgroundBrightness,
     setBackgroundImageUrl,
-    setBackgroundVideoUrl,
-    setBackgroundFile,
     clearBackground,
-    logo,
-    setLogoUrl,
-    setLogoFile,
-    clearLogo,
   } = useSettings();
   const { mutate } = useSWRConfig();
 
   const fileRef = useRef<HTMLInputElement>(null);
-  const logoFileRef = useRef<HTMLInputElement>(null);
-  const [logoCropFile, setLogoCropFile] = useState<File | null>(null);
-  const [siteName, setSiteName] = useState("");
-  const [savingSiteName, setSavingSiteName] = useState(false);
-  const [siteNameStatus, setSiteNameStatus] = useState<"saved" | "error" | "">("");
-  const [logoSettingUrl, setLogoSettingUrl] = useState("");
-  const [savingLogoSetting, setSavingLogoSetting] = useState(false);
-  const [logoSettingStatus, setLogoSettingStatus] = useState<"saved" | "error" | "">("");
   const [backgroundSettingImageUrl, setBackgroundSettingImageUrl] = useState("");
-  const [backgroundSettingVideoUrl, setBackgroundSettingVideoUrl] = useState("");
   const [savingBackgroundSetting, setSavingBackgroundSetting] = useState(false);
   const [backgroundSettingStatus, setBackgroundSettingStatus] = useState<
     "saved" | "error" | ""
@@ -110,62 +101,11 @@ export function SettingsDialog({
 
   useEffect(() => {
     const settings = (info?.theme_settings ?? {}) as Record<string, unknown>;
-    const next =
-      typeof settings.titleText === "string"
-        ? settings.titleText
-        : typeof settings.siteName === "string"
-          ? settings.siteName
-          : "";
-    setSiteName(next);
-    setSiteNameStatus("");
-    const nextLogoUrl = typeof settings.logoUrl === "string" ? settings.logoUrl : "";
     const nextBackgroundUrl =
       typeof settings.backgroundUrl === "string" ? settings.backgroundUrl : "";
-    const nextBackgroundVideoUrl =
-      typeof settings.backgroundVideoUrl === "string" ? settings.backgroundVideoUrl : "";
-    setLogoSettingUrl(nextLogoUrl);
     setBackgroundSettingImageUrl(nextBackgroundUrl);
-    setBackgroundSettingVideoUrl(nextBackgroundVideoUrl);
-    setLogoSettingStatus("");
     setBackgroundSettingStatus("");
   }, [info?.theme_settings]);
-
-  const handleSaveSiteName = async () => {
-    if (!info?.theme) return;
-    setSavingSiteName(true);
-    setSiteNameStatus("");
-    try {
-      await saveThemeSettings(info.theme, {
-        ...(info.theme_settings ?? {}),
-        titleText: siteName.trim(),
-        siteName: "",
-      });
-      await mutate("public-info");
-      setSiteNameStatus("saved");
-    } catch {
-      setSiteNameStatus("error");
-    } finally {
-      setSavingSiteName(false);
-    }
-  };
-
-  const handleSaveLogoSetting = async () => {
-    if (!info?.theme) return;
-    setSavingLogoSetting(true);
-    setLogoSettingStatus("");
-    try {
-      await saveThemeSettings(info.theme, {
-        ...(info.theme_settings ?? {}),
-        logoUrl: logoSettingUrl.trim(),
-      });
-      await mutate("public-info");
-      setLogoSettingStatus("saved");
-    } catch {
-      setLogoSettingStatus("error");
-    } finally {
-      setSavingLogoSetting(false);
-    }
-  };
 
   const handleSaveBackgroundSetting = async () => {
     if (!info?.theme) return;
@@ -175,7 +115,57 @@ export function SettingsDialog({
       await saveThemeSettings(info.theme, {
         ...(info.theme_settings ?? {}),
         backgroundUrl: backgroundSettingImageUrl.trim(),
-        backgroundVideoUrl: backgroundSettingVideoUrl.trim(),
+        backgroundVideoUrl: "",
+        backgroundBrightness: String(backgroundBrightness),
+      });
+      await mutate("public-info");
+      setBackgroundSettingStatus("saved");
+    } catch {
+      setBackgroundSettingStatus("error");
+    } finally {
+      setSavingBackgroundSetting(false);
+    }
+  };
+
+  const handleBackgroundFile = async (file: File) => {
+    if (!BACKGROUND_IMAGE_TYPES.has(file.type)) {
+      setBackgroundSettingStatus("error");
+      return;
+    }
+    setSavingBackgroundSetting(true);
+    setBackgroundSettingStatus("");
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      setBackgroundSettingImageUrl(dataUrl);
+      setBackgroundImageUrl(dataUrl);
+      if (info?.theme) {
+        await saveThemeSettings(info.theme, {
+          ...(info.theme_settings ?? {}),
+          backgroundUrl: dataUrl,
+          backgroundVideoUrl: "",
+          backgroundBrightness: String(backgroundBrightness),
+        });
+        await mutate("public-info");
+      }
+      setBackgroundSettingStatus("saved");
+    } catch {
+      setBackgroundSettingStatus("error");
+    } finally {
+      setSavingBackgroundSetting(false);
+    }
+  };
+
+  const handleClearBackground = async () => {
+    clearBackground();
+    setBackgroundSettingImageUrl("");
+    setBackgroundSettingStatus("");
+    if (!info?.theme) return;
+    setSavingBackgroundSetting(true);
+    try {
+      await saveThemeSettings(info.theme, {
+        ...(info.theme_settings ?? {}),
+        backgroundUrl: "",
+        backgroundVideoUrl: "",
         backgroundBrightness: String(backgroundBrightness),
       });
       await mutate("public-info");
@@ -272,175 +262,34 @@ export function SettingsDialog({
             />
           </Section>
 
-          <Section label={t("siteName")}>
-            <div className="flex gap-2">
-              <input
-                value={siteName}
-                onChange={(e) => {
-                  setSiteName(e.target.value);
-                  setSiteNameStatus("");
-                }}
-                placeholder={t("siteNamePlaceholder")}
-                aria-label={t("siteName")}
-                className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 min-w-0 flex-1 rounded-md border px-3 text-sm outline-none focus:ring-2"
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={!info?.theme || savingSiteName}
-                onClick={handleSaveSiteName}
-              >
-                {savingSiteName ? t("saving") : t("save")}
-              </Button>
-            </div>
-            {siteNameStatus ? (
-              <div
-                className={cn(
-                  "text-xs",
-                  siteNameStatus === "saved" ? "text-kumo-success" : "text-kumo-danger",
-                )}
-              >
-                {siteNameStatus === "saved" ? t("saved") : t("saveFailed")}
-              </div>
-            ) : null}
-          </Section>
-
-          <Section label={t("logo")}>
-            <input
-              ref={logoFileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                setLogoCropFile(file);
-                if (logoFileRef.current) logoFileRef.current.value = "";
-              }}
-            />
-            <div className="flex items-center gap-3">
-              <Button variant="secondary" size="sm" onClick={() => logoFileRef.current?.click()}>
-                <ImageIcon size={15} />
-                {t("uploadLogo")}
-              </Button>
-              {logo ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={logo}
-                    alt=""
-                    className="border-kumo-hairline h-9 w-9 shrink-0 rounded-lg border object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => clearLogo()}
-                    className="text-kumo-subtle hover:text-kumo-danger inline-flex items-center gap-1 text-xs transition-colors"
-                  >
-                    <TrashIcon size={14} />
-                    {t("removeLogo")}
-                  </button>
-                </>
-              ) : null}
-            </div>
-            <div className="mt-3">
-              <div className="flex gap-2">
-                <input
-                  value={logoSettingUrl}
-                  onChange={(e) => {
-                    setLogoSettingUrl(e.target.value);
-                    setLogoUrl(e.target.value);
-                    setLogoSettingStatus("");
-                  }}
-                  placeholder={t("logoUrl")}
-                  aria-label={t("logoUrl")}
-                  className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 min-w-0 flex-1 rounded-md border px-3 text-sm outline-none focus:ring-2"
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={!info?.theme || savingLogoSetting}
-                  onClick={handleSaveLogoSetting}
-                >
-                  {savingLogoSetting ? t("saving") : t("save")}
-                </Button>
-              </div>
-              {logoSettingStatus ? (
-                <div
-                  className={cn(
-                    "mt-2 text-xs",
-                    logoSettingStatus === "saved" ? "text-kumo-success" : "text-kumo-danger",
-                  )}
-                >
-                  {logoSettingStatus === "saved" ? t("saved") : t("saveFailed")}
-                </div>
-              ) : null}
-            </div>
-            {logoCropFile ? (
-              <div className="mt-3">
-                <LogoCropper
-                  file={logoCropFile}
-                  onCancel={() => setLogoCropFile(null)}
-                  onApply={async (blob) => {
-                    await setLogoFile(blob);
-                    setLogoCropFile(null);
-                  }}
-                  labels={{
-                    cropLogo: t("cropLogo"),
-                    apply: t("apply"),
-                    cancel: t("cancel"),
-                    zoom: t("zoom"),
-                    horizontal: t("horizontal"),
-                    vertical: t("vertical"),
-                  }}
-                />
-              </div>
-            ) : null}
-          </Section>
-
           <Section label={t("background")}>
             <input
               ref={fileRef}
               type="file"
-              accept="image/*,video/*"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
               className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                try {
-                  await setBackgroundFile(file);
-                } catch {
-                  /* ignore unreadable / oversized files */
-                }
+                await handleBackgroundFile(file);
                 if (fileRef.current) fileRef.current.value = "";
               }}
             />
             <div className="flex items-center gap-3">
               <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
                 <ImageIcon size={15} />
-                {t("uploadMedia")}
+                {t("uploadImage")}
               </Button>
               {background ? (
                 <>
-                  {backgroundType === "video" ? (
-                    <video
-                      aria-hidden
-                      className="border-kumo-hairline h-9 w-14 shrink-0 rounded-md border object-cover"
-                      src={background}
-                      muted
-                      loop
-                      autoPlay
-                      playsInline
-                    />
-                  ) : (
-                    <span
-                      aria-hidden
-                      className="border-kumo-hairline h-9 w-14 shrink-0 rounded-md border bg-cover bg-center"
-                      style={{ backgroundImage: `url("${background}")` }}
-                    />
-                  )}
+                  <span
+                    aria-hidden
+                    className="border-kumo-hairline h-9 w-14 shrink-0 rounded-md border bg-cover bg-center"
+                    style={{ backgroundImage: `url("${background}")` }}
+                  />
                   <button
                     type="button"
-                    onClick={() => clearBackground()}
+                    onClick={handleClearBackground}
                     className="text-kumo-subtle hover:text-kumo-danger inline-flex items-center gap-1 text-xs transition-colors"
                   >
                     <TrashIcon size={14} />
@@ -459,17 +308,6 @@ export function SettingsDialog({
                 }}
                 placeholder={t("backgroundImageUrl")}
                 aria-label={t("backgroundImageUrl")}
-                className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
-              />
-              <input
-                value={backgroundSettingVideoUrl}
-                onChange={(e) => {
-                  setBackgroundSettingVideoUrl(e.target.value);
-                  setBackgroundVideoUrl(e.target.value);
-                  setBackgroundSettingStatus("");
-                }}
-                placeholder={t("backgroundVideoUrl")}
-                aria-label={t("backgroundVideoUrl")}
                 className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
               />
             </div>

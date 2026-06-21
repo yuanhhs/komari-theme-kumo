@@ -21,16 +21,12 @@ import type { PublicInfo, VersionInfo } from "@/lib/types";
 export function SiteHeader({
   info,
   version,
-  siteName,
-  logoUrl,
   lastUpdated,
   search,
   onSearch,
 }: {
   info?: PublicInfo;
   version?: VersionInfo;
-  siteName?: string;
-  logoUrl?: string;
   lastUpdated?: string;
   search: string;
   onSearch: (value: string) => void;
@@ -40,13 +36,11 @@ export function SiteHeader({
   const loggedIn = !!me?.logged_in;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [logoError, setLogoError] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const sitename = siteName?.trim() || info?.sitename || "Komari";
+  const sitename = info?.sitename || "Komari";
   const toggleMode = () => setAppearance(mode === "dark" ? "light" : "dark");
-  const showLogo = logoUrl && !logoError;
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -63,19 +57,9 @@ export function SiteHeader({
     <header className="border-kumo-hairline bg-kumo-canvas/80 sticky top-0 z-30 border-b backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[var(--app-max-width,1400px)] items-center justify-between gap-3 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          {showLogo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoUrl}
-              alt={sitename}
-              onError={() => setLogoError(true)}
-              className="h-8 w-8 rounded-lg object-cover"
-            />
-          ) : (
-            <div className="bg-kumo-brand flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-              <CloudIcon size={20} weight="fill" className="text-white" />
-            </div>
-          )}
+          <div className="bg-kumo-brand flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+            <CloudIcon size={20} weight="fill" className="text-white" />
+          </div>
           <div className="min-w-0">
             <h1 className="text-kumo-default truncate text-base leading-tight font-semibold">
               {sitename}

@@ -60,9 +60,7 @@ export function Dashboard() {
     columns,
     overview,
     background,
-    backgroundType,
     backgroundBrightness,
-    logo,
     seedDefaults,
   } = useSettings();
   const { views, isLoading, error, lastUpdated, refresh } = useDashboard();
@@ -70,8 +68,7 @@ export function Dashboard() {
   const { data: version } = useVersion();
 
   const options = useMemo(() => parseThemeOptions(info), [info]);
-  const bgUrl = background || options.backgroundVideoUrl || options.backgroundUrl;
-  const bgIsVideo = background ? backgroundType === "video" : !!options.backgroundVideoUrl;
+  const bgUrl = background || options.backgroundUrl;
   const footerNote = useMemo(
     () => (options.footerNote ? sanitizeHtml(options.footerNote) : ""),
     [options.footerNote],
@@ -132,34 +129,19 @@ export function Dashboard() {
   return (
     <div className="relative min-h-screen">
       {bgUrl ? (
-        bgIsVideo ? (
-          <video
-            aria-hidden
-            className="pointer-events-none fixed inset-0 -z-10 h-full w-full object-cover"
-            src={bgUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            style={{ filter: `brightness(${backgroundBrightness}%)` }}
-          />
-        ) : (
-          <div
-            aria-hidden
-            className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: `url("${bgUrl}")`,
-              filter: `brightness(${backgroundBrightness}%)`,
-            }}
-          />
-        )
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url("${bgUrl}")`,
+            filter: `brightness(${backgroundBrightness}%)`,
+          }}
+        />
       ) : null}
 
       <SiteHeader
         info={info}
         version={version}
-        siteName={options.siteName}
-        logoUrl={logo || options.logoUrl}
         lastUpdated={lastUpdated}
         search={search}
         onSearch={setSearch}

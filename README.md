@@ -22,11 +22,10 @@ Base UI + Tailwind CSS v4）构建。
   以及完整的系统/账单信息；**无数据的指标（如温度）自动隐藏，不再显示占位符**。
 - **主题外观** —— 浅色 / 深色 / 跟随系统，六种强调色，全部基于 Kumo 语义化 token
   （通过 `light-dark()` 自动暗色）。
-- **自定义站点信息** —— 支持通过主题设置持久化站点名称、Logo 与背景路径。
-- **自定义背景** —— 访客可上传本地图片 / 视频作背景（存入 IndexedDB），覆盖管理员设置的默认背景。
+- **自定义背景** —— 管理员可上传原图或填写图片路径，背景会保存到 Komari 的主题设置中。
 - **国际化** —— 简体中文 + English，自动识别、可切换。
 - **管理员可配置** —— 内置 Komari `managed` 配置（默认外观/视图/列数/卡片样式/强调色、
-  分组筛选、Logo、背景图、页脚备注）。
+  分组筛选、背景图、页脚备注）。
 
 ## 技术栈
 
@@ -111,19 +110,15 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 | `cardStyle` | select | `solid` | 卡片样式：实心 / 磨砂 |
 | `defaultAccent` | select | `default` | 强调色 |
 | `enableGroupTabs` | switch | `true` | 显示分组筛选 |
-| `titleText` | string | — | 头部站点名称（留空使用 Komari 后端站点名称） |
-| `logoUrl` | string | — | 头部 Logo（留空使用内置云朵图标） |
 | `backgroundUrl` | string | — | 页面背景图 |
-| `backgroundVideoUrl` | string | — | 页面背景视频（优先于背景图） |
 | `backgroundBrightness` | select | `100` | 页面背景亮度 |
 | `footerNote` | richtext | — | 显示在 Powered-by 上方的 HTML |
 
-本地静态图片默认放在 `public/assets/`，在设置里使用 `/assets/文件名` 作为 Logo 或背景路径；
+本地静态图片默认放在 `public/assets/`，在设置里使用 `/assets/文件名` 作为背景路径；
 打包后该目录会保留为主题包内的 `dist/assets/`。
 
 访客偏好优先级高于管理员默认值。外观、语言、视图、列数、卡片样式、强调色等轻量设置存储在
-`localStorage`；本地上传的 Logo 与背景媒体存储在 IndexedDB 的 `kumo-theme` 数据库中。
-站点名称、Logo、背景图片/视频地址与背景亮度保存到 Komari 的 `theme_settings` 后随站点持久化，换浏览器也会生效。
+`localStorage`。背景图片地址与背景亮度保存到 Komari 的 `theme_settings` 后随站点持久化，换浏览器也会生效；上传图片时会按原图读成 data URL 保存，不做压缩或格式转换。
 
 ## 项目结构
 
@@ -137,7 +132,7 @@ lib/
   aggregate.ts       节点视图模型 + 统计 + 分组（纯函数）
   format.ts          字节 / 速率 / 在线时长 / 百分比 等格式化
   i18n.ts            zh-CN + en 词典
-  image.ts           背景图上传压缩（→ WebP data URL）
+  file.ts            背景图原图读取（→ data URL）
   theme-settings.ts  解析 theme_settings
 hooks/useKomari.ts   SWR hooks（实时轮询）
 components/          dashboard、node-card、node-list、node-detail-dialog、
