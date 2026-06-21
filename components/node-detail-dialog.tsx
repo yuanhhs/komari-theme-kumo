@@ -3,6 +3,19 @@
 import { useState, type ReactNode } from "react";
 import { Dialog, Badge, cn } from "@cloudflare/kumo";
 import { XIcon } from "@phosphor-icons/react";
+import {
+  Cpu,
+  MemoryStick,
+  ReplaceAll,
+  HardDrive,
+  ArrowDownUp,
+  Network,
+  ListTree,
+  Clock,
+  Gauge,
+  Thermometer,
+  Activity,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatusDot } from "@/components/ui/indicators";
 import { RegionFlag } from "@/components/ui/region-flag";
@@ -25,10 +38,11 @@ import {
 
 type Range = "1" | "6" | "24";
 
-function Chip({ label, value }: { label: string; value: ReactNode }) {
+function Chip({ label, value, icon }: { label: string; value: ReactNode; icon?: ReactNode }) {
   return (
     <div className="bg-kumo-tint flex flex-col gap-0.5 rounded-lg px-3 py-2">
-      <span className="text-kumo-subtle text-[11px] tracking-wide uppercase">
+      <span className="text-kumo-subtle flex items-center gap-1 text-[11px] tracking-wide uppercase">
+        {icon}
         {label}
       </span>
       <span className="text-kumo-default text-sm font-semibold tabular-nums">
@@ -42,14 +56,17 @@ function Panel({
   title,
   children,
   className,
+  icon,
 }: {
   title: string;
   children: ReactNode;
   className?: string;
+  icon?: ReactNode;
 }) {
   return (
     <Card variant="flat" className={cn("p-4", className)}>
-      <div className="text-kumo-subtle mb-3 text-xs font-semibold tracking-wide uppercase">
+      <div className="text-kumo-subtle mb-3 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase">
+        {icon}
         {title}
       </div>
       {children}
@@ -57,11 +74,14 @@ function Panel({
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: ReactNode }) {
+function InfoRow({ label, value, icon }: { label: string; value: ReactNode; icon?: ReactNode }) {
   if (!value) return null;
   return (
     <div className="border-kumo-hairline flex items-start justify-between gap-4 border-b py-2 last:border-0">
-      <span className="text-kumo-subtle shrink-0 text-xs">{label}</span>
+      <span className="text-kumo-subtle flex shrink-0 items-center gap-1.5 text-xs">
+        {icon}
+        {label}
+      </span>
       <span className="text-kumo-default text-right text-xs font-medium break-all">
         {value}
       </span>
@@ -122,6 +142,18 @@ export function NodeDetailDialog({
     { name: t("upload"), color: colors.up, data: records.map((r) => [ts(r), r.net_out]) },
     { name: t("download"), color: colors.down, data: records.map((r) => [ts(r), r.net_in]) },
   ];
+  const connSeries: ChartSeries[] = [
+    { name: "TCP", color: colors.brand, area: true, data: records.map((r) => [ts(r), r.connections]) },
+    { name: "UDP", color: colors.info, data: records.map((r) => [ts(r), r.connections_udp]) },
+  ];
+  const procSeries: ChartSeries[] = [
+    {
+      name: t("processes"),
+      color: colors.success,
+      area: true,
+      data: records.map((r) => [ts(r), r.process]),
+    },
+  ];
 
   const pingPalette = [colors.brand, colors.info, colors.success, colors.warning, colors.danger];
   const byTask = new Map<number, [number, number][]>();
@@ -144,25 +176,39 @@ export function NodeDetailDialog({
 
   // Quick-stat chips: only include metrics the agent actually reports
   // (e.g. hide temperature / swap when there's no reading instead of showing "—").
-  const chips: { label: string; value: ReactNode }[] = [];
+  const chips: { label: string; value: ReactNode; icon: ReactNode }[] = [];
   if (status) {
-    if (status.uptime) chips.push({ label: t("uptime"), value: formatUptime(status.uptime) });
+    if (status.uptime)
+      chips.push({
+        label: t("uptime"),
+        value: formatUptime(status.uptime),
+        icon: <Clock size={12} />,
+      });
     chips.push({
       label: t("load"),
       value: `${status.load.toFixed(2)} / ${status.load5.toFixed(2)} / ${status.load15.toFixed(2)}`,
+      icon: <Gauge size={12} />,
     });
-    if (status.process > 0) chips.push({ label: t("processes"), value: status.process });
+    if (status.process > 0)
+      chips.push({ label: t("processes"), value: status.process, icon: <ListTree size={12} /> });
     if (status.connections > 0 || status.connections_udp > 0)
       chips.push({
         label: t("connections"),
         value: `${status.connections} / ${status.connections_udp}`,
+        icon: <Network size={12} />,
       });
     if (node.swap_total > 0)
       chips.push({
         label: t("swap"),
         value: formatPercent(ratioPercent(status.swap, status.swap_total), 0),
+        icon: <ReplaceAll size={12} />,
       });
-    if (status.temp > 0) chips.push({ label: t("temperature"), value: formatTemp(status.temp) });
+    if (status.temp > 0)
+      chips.push({
+        label: t("temperature"),
+        value: formatTemp(status.temp),
+        icon: <Thermometer size={12} />,
+      });
   }
 
   return (
@@ -200,7 +246,7 @@ export function NodeDetailDialog({
             {chips.length > 0 ? (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
                 {chips.map((c) => (
-                  <Chip key={c.label} label={c.label} value={c.value} />
+                  <Chip key={c.label} label={c.label} value={c.value} icon={c.icon} />
                 ))}
               </div>
             ) : null}
@@ -221,7 +267,15 @@ export function NodeDetailDialog({
 
             {/* Charts */}
             <div className="grid gap-4 lg:grid-cols-2">
-              <Panel title={`${t("cpu")} / ${t("memory")}`}>
+              <Panel
+                title={`${t("cpu")} / ${t("memory")}`}
+                icon={
+                  <span className="flex items-center gap-1">
+                    <Cpu size={13} />
+                    <MemoryStick size={13} />
+                  </span>
+                }
+              >
                 {hasLoad ? (
                   <TimeSeriesChart
                     series={cpuRam}
@@ -233,7 +287,7 @@ export function NodeDetailDialog({
                   <NoData label={t("loading")} />
                 )}
               </Panel>
-              <Panel title={t("networkSpeed")}>
+              <Panel title={t("networkSpeed")} icon={<ArrowDownUp size={13} />}>
                 {hasLoad ? (
                   <TimeSeriesChart
                     series={netSeries}
@@ -244,8 +298,30 @@ export function NodeDetailDialog({
                   <NoData label={t("loading")} />
                 )}
               </Panel>
+              <Panel title={t("connections")} icon={<Network size={13} />}>
+                {hasLoad ? (
+                  <TimeSeriesChart
+                    series={connSeries}
+                    mode={mode}
+                    valueFormatter={(v) => String(Math.round(v))}
+                  />
+                ) : (
+                  <NoData label={t("loading")} />
+                )}
+              </Panel>
+              <Panel title={t("processes")} icon={<ListTree size={13} />}>
+                {hasLoad ? (
+                  <TimeSeriesChart
+                    series={procSeries}
+                    mode={mode}
+                    valueFormatter={(v) => String(Math.round(v))}
+                  />
+                ) : (
+                  <NoData label={t("loading")} />
+                )}
+              </Panel>
               {pingSeries.length > 0 ? (
-                <Panel title={t("latency")} className="lg:col-span-2">
+                <Panel title={t("latency")} icon={<Activity size={13} />} className="lg:col-span-2">
                   <TimeSeriesChart
                     series={pingSeries}
                     mode={mode}
@@ -275,14 +351,15 @@ export function NodeDetailDialog({
                 <div>
                   <InfoRow
                     label={t("cores")}
+                    icon={<Cpu size={12} />}
                     value={
                       node.cpu_physical_cores
                         ? `${node.cpu_cores} / ${node.cpu_physical_cores}`
                         : String(node.cpu_cores)
                     }
                   />
-                  <InfoRow label={t("memory")} value={formatBytes(node.mem_total)} />
-                  <InfoRow label={t("disk")} value={formatBytes(node.disk_total)} />
+                  <InfoRow label={t("memory")} icon={<MemoryStick size={12} />} value={formatBytes(node.mem_total)} />
+                  <InfoRow label={t("disk")} icon={<HardDrive size={12} />} value={formatBytes(node.disk_total)} />
                   {node.price > 0 ? (
                     <InfoRow
                       label={t("price")}
