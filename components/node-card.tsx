@@ -1,7 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { cn, Badge } from "@cloudflare/kumo";
 import { ArrowUpIcon, ArrowDownIcon, ClockIcon, HourglassIcon } from "@phosphor-icons/react";
+import { Cpu, MemoryStick, ReplaceAll, HardDrive } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { UsageBar } from "@/components/ui/indicators";
 import { RegionFlag } from "@/components/ui/region-flag";
@@ -34,16 +36,18 @@ function MetricRow({
   label,
   percent,
   detail,
+  icon,
 }: {
   label: string;
   percent: number;
   detail?: string;
+  icon?: ReactNode;
 }) {
   return (
     <div className="space-y-1">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-kumo-subtle text-xs font-medium tracking-wide uppercase">
-          {label}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-kumo-subtle flex items-center" title={label}>
+          {icon ?? label}
         </span>
         <span className="text-kumo-default text-xs font-semibold tabular-nums">
           {detail ?? formatPercent(percent, 0)}
@@ -137,12 +141,27 @@ export function NodeCard({
       {online && status ? (
         <>
           <div className="space-y-2.5">
-            <MetricRow label={t("cpu")} percent={cpu} />
-            <MetricRow label={t("memory")} percent={memPct} detail={formatPercent(memPct, 0)} />
+            <MetricRow label={t("cpu")} percent={cpu} icon={<Cpu size={14} />} />
+            <MetricRow
+              label={t("memory")}
+              percent={memPct}
+              detail={formatPercent(memPct, 0)}
+              icon={<MemoryStick size={14} />}
+            />
             {swapTotal > 0 ? (
-              <MetricRow label={t("swap")} percent={swapPct} detail={formatPercent(swapPct, 0)} />
+              <MetricRow
+                label={t("swap")}
+                percent={swapPct}
+                detail={formatPercent(swapPct, 0)}
+                icon={<ReplaceAll size={14} />}
+              />
             ) : null}
-            <MetricRow label={t("disk")} percent={diskPct} detail={formatPercent(diskPct, 0)} />
+            <MetricRow
+              label={t("disk")}
+              percent={diskPct}
+              detail={formatPercent(diskPct, 0)}
+              icon={<HardDrive size={14} />}
+            />
           </div>
 
           <div className="border-kumo-hairline border-t pt-3">
@@ -169,13 +188,13 @@ export function NodeCard({
                 caption={expiryCaption}
               />
             </div>
-            {status.uptime ? (
-              <div className="text-kumo-subtle mt-2.5 flex items-center justify-center gap-1 text-[10px] tabular-nums">
-                <ClockIcon size={11} weight="bold" />
-                {formatUptime(status.uptime)}
-              </div>
-            ) : null}
           </div>
+          {status.uptime ? (
+            <div className="text-kumo-subtle mt-auto flex items-center justify-center gap-1 text-[10px] tabular-nums">
+              <ClockIcon size={11} weight="bold" />
+              {formatUptime(status.uptime)}
+            </div>
+          ) : null}
         </>
       ) : (
         <div className="flex h-[7.5rem] flex-col items-center justify-center gap-1 text-center">
