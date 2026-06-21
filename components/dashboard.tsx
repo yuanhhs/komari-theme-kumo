@@ -157,7 +157,7 @@ export function Dashboard() {
       <SiteHeader
         info={info}
         version={version}
-        siteName={options.siteName}
+        siteName={options.titleText}
         logoUrl={logo || options.logoUrl}
         lastUpdated={lastUpdated}
         search={search}

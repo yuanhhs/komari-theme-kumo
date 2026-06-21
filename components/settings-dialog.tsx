@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSWRConfig } from "swr";
+import { useRef, useState } from "react";
 import { Dialog, Button, cn } from "@cloudflare/kumo";
 import {
   SunIcon,
@@ -27,9 +26,7 @@ import {
   type Surface,
   type ViewMode,
 } from "@/components/providers";
-import { saveThemeSettings } from "@/lib/admin";
 import type { Lang } from "@/lib/i18n";
-import type { PublicInfo } from "@/lib/types";
 import type { ReactNode } from "react";
 
 const ACCENT_SWATCH: Record<Accent, string> = {
@@ -55,11 +52,9 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
 export function SettingsDialog({
   open,
   onOpenChange,
-  info,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  info?: PublicInfo;
 }) {
   const {
     t,
@@ -93,39 +88,10 @@ export function SettingsDialog({
     setLogoFile,
     clearLogo,
   } = useSettings();
-  const { mutate } = useSWRConfig();
 
   const fileRef = useRef<HTMLInputElement>(null);
   const logoFileRef = useRef<HTMLInputElement>(null);
   const [logoCropFile, setLogoCropFile] = useState<File | null>(null);
-  const [siteName, setSiteName] = useState("");
-  const [savingSiteName, setSavingSiteName] = useState(false);
-  const [siteNameStatus, setSiteNameStatus] = useState<"saved" | "error" | "">("");
-
-  useEffect(() => {
-    const settings = (info?.theme_settings ?? {}) as Record<string, unknown>;
-    const next = typeof settings.siteName === "string" ? settings.siteName : "";
-    setSiteName(next);
-    setSiteNameStatus("");
-  }, [info?.theme_settings]);
-
-  const handleSaveSiteName = async () => {
-    if (!info?.theme) return;
-    setSavingSiteName(true);
-    setSiteNameStatus("");
-    try {
-      await saveThemeSettings(info.theme, {
-        ...(info.theme_settings ?? {}),
-        siteName: siteName.trim(),
-      });
-      await mutate("public-info");
-      setSiteNameStatus("saved");
-    } catch {
-      setSiteNameStatus("error");
-    } finally {
-      setSavingSiteName(false);
-    }
-  };
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -210,39 +176,6 @@ export function SettingsDialog({
                 { value: "hide", label: t("hide") },
               ]}
             />
-          </Section>
-
-          <Section label={t("siteName")}>
-            <div className="flex gap-2">
-              <input
-                value={siteName}
-                onChange={(e) => {
-                  setSiteName(e.target.value);
-                  setSiteNameStatus("");
-                }}
-                placeholder={t("siteNamePlaceholder")}
-                aria-label={t("siteName")}
-                className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 min-w-0 flex-1 rounded-md border px-3 text-sm outline-none focus:ring-2"
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={!info?.theme || savingSiteName}
-                onClick={handleSaveSiteName}
-              >
-                {savingSiteName ? t("saving") : t("save")}
-              </Button>
-            </div>
-            {siteNameStatus ? (
-              <div
-                className={cn(
-                  "text-xs",
-                  siteNameStatus === "saved" ? "text-kumo-success" : "text-kumo-danger",
-                )}
-              >
-                {siteNameStatus === "saved" ? t("saved") : t("saveFailed")}
-              </div>
-            ) : null}
           </Section>
 
           <Section label={t("logo")}>

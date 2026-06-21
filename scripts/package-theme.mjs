@@ -20,16 +20,13 @@ import {
   createWriteStream,
   statSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import archiver from "archiver";
 
 const root = process.cwd();
 const p = (...parts) => join(root, ...parts);
 
-const DEV_ROUTES = [
-  p("app", "api", "rpc2", "route.ts"),
-  p("app", "api", "admin", "theme", "settings", "route.ts"),
-];
+const ROUTE = p("app", "api", "rpc2", "route.ts");
 const OUT = p("out");
 const NEXT = p(".next");
 const THEME = p("theme");
@@ -43,17 +40,14 @@ const manifest = JSON.parse(readFileSync(p("theme.manifest.json"), "utf8"));
 const pkg = JSON.parse(readFileSync(p("package.json"), "utf8"));
 manifest.version = process.env.THEME_VERSION || pkg.version;
 
-// 2. Stash the dev-only route handlers (incompatible with output: export).
-//    We stash by content rather than renaming dirs to avoid Windows
+// 2. Stash the dev-only route handler (incompatible with output: export).
+//    We stash by content rather than renaming the dir to avoid Windows
 //    file-watcher locks (EPERM on directory rename).
-const stashedRoutes = [];
-for (const route of DEV_ROUTES) {
-  if (!existsSync(route)) continue;
-  stashedRoutes.push([route, readFileSync(route, "utf8")]);
-  rmSync(route);
-}
-if (stashedRoutes.length > 0) {
-  log(`stashed ${stashedRoutes.length} dev route handler(s)`);
+let stashedRoute = null;
+if (existsSync(ROUTE)) {
+  stashedRoute = readFileSync(ROUTE, "utf8");
+  rmSync(ROUTE);
+  log("stashed dev route handler (app/api/rpc2/route.ts)");
 }
 
 function runExport() {
@@ -77,12 +71,9 @@ try {
     runExport();
   }
 } finally {
-  if (stashedRoutes.length > 0) {
-    for (const [route, content] of stashedRoutes) {
-      mkdirSync(dirname(route), { recursive: true });
-      writeFileSync(route, content);
-    }
-    log("restored dev route handler(s)");
+  if (stashedRoute != null) {
+    writeFileSync(ROUTE, stashedRoute);
+    log("restored dev route handler");
   }
 }
 

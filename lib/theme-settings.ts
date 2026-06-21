@@ -5,7 +5,7 @@ import type { Accent, Appearance, Columns, Surface, ViewMode } from "@/component
 import { isSafeResourceUrl } from "@/lib/sanitize";
 
 export interface ThemeOptions {
-  siteName: string;
+  titleText: string;
   logoUrl: string;
   footerNote: string;
   backgroundUrl: string;
@@ -46,7 +46,7 @@ export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
   const columns = asString(s.defaultColumns);
   const cardStyle = asString(s.cardStyle);
   return {
-    siteName: asString(s.siteName).trim(),
+    titleText: (asString(s.titleText) || asString(s.siteName)).trim(),
     logoUrl: asResourceUrl(s.logoUrl),
     footerNote: asString(s.footerNote),
     backgroundUrl: asResourceUrl(s.backgroundUrl),
