@@ -48,12 +48,18 @@
         "default": "default",
         "name": { "zh-CN": "主题色", "en": "Accent color" }
       },
-      { "type": "title", "name": { "zh-CN": "标题栏设置", "en": "Header" } },
+      { "type": "title", "name": { "zh-CN": "显示", "en": "Display" } },
       {
-        "key": "titleText",
+        "key": "enableGroupTabs",
+        "type": "switch",
+        "default": true,
+        "name": { "zh-CN": "显示分组筛选", "en": "Show group filter" }
+      },
+      {
+        "key": "siteName",
         "type": "string",
         "default": "",
-        "name": { "zh-CN": "标题栏标题文本", "en": "Header title text" },
+        "name": { "zh-CN": "站点名称", "en": "Site name" },
         "help": { "zh-CN": "留空使用 Komari 后端站点名称", "en": "Leave empty to use the Komari server site name" }
       },
       {
@@ -68,13 +74,6 @@
         "type": "string",
         "default": "",
         "name": { "zh-CN": "背景图 URL", "en": "Background image URL" }
-      },
-      { "type": "title", "name": { "zh-CN": "显示", "en": "Display" } },
-      {
-        "key": "enableGroupTabs",
-        "type": "switch",
-        "default": true,
-        "name": { "zh-CN": "显示分组筛选", "en": "Show group filter" }
       },
       {
         "key": "footerNote",

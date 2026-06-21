@@ -80,7 +80,13 @@ export function groupNodeViews(views: NodeView[]): NodeGroup[] {
     if (list) list.push(view);
     else buckets.set(key, [view]);
   }
-  return [...buckets.entries()].map(([name, list]) => ({ name, views: list }));
+  return [...buckets.entries()]
+    .map(([name, list]) => ({ name, views: list }))
+    .sort((a, b) => {
+      if (a.name === "") return 1;
+      if (b.name === "") return -1;
+      return a.name.localeCompare(b.name);
+    });
 }
 
 /** Distinct group names in node order (excluding the empty group). */
