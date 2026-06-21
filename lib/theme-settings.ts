@@ -16,17 +16,17 @@ import type { Lang } from "@/lib/i18n";
 export interface ThemeOptions {
   footerNote: string;
   backgroundUrl: string;
-  backgroundBrightness?: BackgroundBrightness;
+  backgroundBrightness: BackgroundBrightness;
   /** Show the per-group filter tabs when groups exist. */
   enableGroupTabs: boolean;
-  /** Admin defaults applied only when the visitor has no saved preference. */
-  defaultView?: ViewMode;
-  defaultAppearance?: Appearance;
-  defaultAccent?: Accent;
-  defaultColumns?: Columns;
-  defaultSurface?: Surface;
-  defaultLang?: Lang;
-  defaultOverview?: OverviewVisibility;
+  /** Defaults resolved from backend theme settings. */
+  defaultView: ViewMode;
+  defaultAppearance: Appearance;
+  defaultAccent: Accent;
+  defaultColumns: Columns;
+  defaultSurface: Surface;
+  defaultLang: Lang;
+  defaultOverview: OverviewVisibility;
 }
 
 function asString(v: unknown, fallback = ""): string {
@@ -44,11 +44,11 @@ function asResourceUrl(v: unknown): string {
   return isSafeResourceUrl(url) ? url : "";
 }
 
-function asBrightness(v: unknown): BackgroundBrightness | undefined {
+function asBrightness(v: unknown): BackgroundBrightness {
   const n = typeof v === "number" ? v : Number(asString(v));
   return n === 20 || n === 40 || n === 60 || n === 80 || n === 100
     ? (n as BackgroundBrightness)
-    : undefined;
+    : 100;
 }
 
 const VIEWS: ViewMode[] = ["grid", "list"];
@@ -71,17 +71,17 @@ export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
     backgroundUrl: asResourceUrl(s.backgroundUrl),
     backgroundBrightness: asBrightness(s.backgroundBrightness),
     enableGroupTabs: asBool(s.enableGroupTabs, true),
-    defaultView: VIEWS.includes(view as ViewMode) ? (view as ViewMode) : undefined,
+    defaultView: VIEWS.includes(view as ViewMode) ? (view as ViewMode) : "grid",
     defaultAppearance: APPEARANCES.includes(appearance as Appearance)
       ? (appearance as Appearance)
-      : undefined,
-    defaultAccent: ACCENTS.includes(accent as Accent) ? (accent as Accent) : undefined,
-    defaultColumns: columns === "4" || columns === "5" ? (Number(columns) as Columns) : undefined,
+      : "system",
+    defaultAccent: ACCENTS.includes(accent as Accent) ? (accent as Accent) : "default",
+    defaultColumns: columns === "4" || columns === "5" ? (Number(columns) as Columns) : 4,
     defaultSurface:
-      cardStyle === "solid" || cardStyle === "glass" ? (cardStyle as Surface) : undefined,
-    defaultLang: LANGS.includes(lang as Lang) ? (lang as Lang) : undefined,
+      cardStyle === "solid" || cardStyle === "glass" ? (cardStyle as Surface) : "solid",
+    defaultLang: LANGS.includes(lang as Lang) ? (lang as Lang) : "zh-CN",
     defaultOverview: OVERVIEWS.includes(overview as OverviewVisibility)
       ? (overview as OverviewVisibility)
-      : undefined,
+      : "show",
   };
 }

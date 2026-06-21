@@ -122,16 +122,17 @@ interface SettingsContextValue {
   setBackgroundImageUrl: (url: string) => void;
   /** Remove the visitor background. */
   clearBackground: () => void;
-  /** Apply admin-provided defaults for any pref the user has not set. */
+  /** Apply backend theme settings as the source of truth. */
   seedDefaults: (d: {
-    appearance?: Appearance;
-    view?: ViewMode;
-    accent?: Accent;
-    columns?: Columns;
-    surface?: Surface;
-    overview?: OverviewVisibility;
-    lang?: Lang;
-    backgroundBrightness?: BackgroundBrightness;
+    appearance: Appearance;
+    view: ViewMode;
+    accent: Accent;
+    columns: Columns;
+    surface: Surface;
+    overview: OverviewVisibility;
+    lang: Lang;
+    backgroundBrightness: BackgroundBrightness;
+    backgroundImageUrl: string;
   }) => void;
   t: (key: TKey, vars?: Record<string, string | number>) => string;
   mounted: boolean;
@@ -265,25 +266,25 @@ export function Providers({ children }: { children: ReactNode }) {
 
   const seedDefaults = useCallback(
     (d: {
-      appearance?: Appearance;
-      view?: ViewMode;
-      accent?: Accent;
-      columns?: Columns;
-      surface?: Surface;
-      overview?: OverviewVisibility;
-      lang?: Lang;
-      backgroundBrightness?: BackgroundBrightness;
+      appearance: Appearance;
+      view: ViewMode;
+      accent: Accent;
+      columns: Columns;
+      surface: Surface;
+      overview: OverviewVisibility;
+      lang: Lang;
+      backgroundBrightness: BackgroundBrightness;
+      backgroundImageUrl: string;
     }) => {
-      if (d.appearance && readLS(LS.appearance) === null) setAppearance(d.appearance);
-      if (d.view && readLS(LS.view) === null) setView(d.view);
-      if (d.accent && readLS(LS.accent) === null) setAccent(d.accent);
-      if (d.columns && readLS(LS.columns) === null) setColumns(d.columns);
-      if (d.surface && readLS(LS.surface) === null) setSurface(d.surface);
-      if (d.overview && readLS(LS.overview) === null) setOverview(d.overview);
-      if (d.lang && readLS(LS.lang) === null) setLang(d.lang);
-      if (d.backgroundBrightness && readLS(LS.backgroundBrightness) === null) {
-        setBackgroundBrightness(d.backgroundBrightness);
-      }
+      setAppearance(d.appearance);
+      setView(d.view);
+      setAccent(d.accent);
+      setColumns(d.columns);
+      setSurface(d.surface);
+      setOverview(d.overview);
+      setLang(d.lang);
+      setBackgroundBrightness(d.backgroundBrightness);
+      setBackgroundImageUrl(d.backgroundImageUrl);
     },
     [
       setAppearance,
@@ -294,6 +295,7 @@ export function Providers({ children }: { children: ReactNode }) {
       setOverview,
       setLang,
       setBackgroundBrightness,
+      setBackgroundImageUrl,
     ],
   );
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader, Button, cn } from "@cloudflare/kumo";
 import {
   CloudSlashIcon,
@@ -68,7 +68,6 @@ export function Dashboard() {
   const { data: version } = useVersion();
 
   const options = useMemo(() => parseThemeOptions(info), [info]);
-  const bgUrl = background || options.backgroundUrl;
   const footerNote = useMemo(
     () => (options.footerNote ? sanitizeHtml(options.footerNote) : ""),
     [options.footerNote],
@@ -80,10 +79,8 @@ export function Dashboard() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailOrigin, setDetailOrigin] = useState<DOMRect | null>(null);
 
-  const seeded = useRef(false);
   useEffect(() => {
-    if (info && !seeded.current) {
-      seeded.current = true;
+    if (info) {
       seedDefaults({
         appearance: options.defaultAppearance,
         view: options.defaultView,
@@ -93,6 +90,7 @@ export function Dashboard() {
         overview: options.defaultOverview,
         lang: options.defaultLang,
         backgroundBrightness: options.backgroundBrightness,
+        backgroundImageUrl: options.backgroundUrl,
       });
     }
   }, [info, options, seedDefaults]);
@@ -130,12 +128,12 @@ export function Dashboard() {
 
   return (
     <div className="relative min-h-screen">
-      {bgUrl ? (
+      {background ? (
         <div
           aria-hidden
           className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url("${bgUrl}")`,
+            backgroundImage: `url("${background}")`,
             filter: `brightness(${backgroundBrightness}%)`,
           }}
         />
