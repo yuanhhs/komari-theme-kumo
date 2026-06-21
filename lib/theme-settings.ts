@@ -44,7 +44,7 @@ export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
     logoUrl: asString(s.logoUrl),
     footerNote: asString(s.footerNote),
     backgroundUrl: asString(s.backgroundUrl),
-    showOfflineLast: asBool(s.showOfflineLast, true),
+    showOfflineLast: asBool(s.showOfflineLast, false),
     enableGroupTabs: asBool(s.enableGroupTabs, true),
     defaultView: VIEWS.includes(view as ViewMode) ? (view as ViewMode) : undefined,
     defaultAppearance: APPEARANCES.includes(appearance as Appearance)

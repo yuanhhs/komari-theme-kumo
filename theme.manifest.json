@@ -52,7 +52,7 @@
       {
         "key": "showOfflineLast",
         "type": "switch",
-        "default": true,
+        "default": false,
         "name": { "zh-CN": "离线节点排在最后", "en": "Sort offline nodes last" }
       },
       {
