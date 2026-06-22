@@ -273,14 +273,6 @@ export function NodeDetailDialog({
     { name: t("upload"), color: colors.up, data: records.map((r) => [ts(r), r.net_out]) },
     { name: t("download"), color: colors.down, data: records.map((r) => [ts(r), r.net_in]) },
   ];
-  const trafficSeries: ChartSeries[] = [
-    { name: t("upload"), color: colors.up, data: records.map((r) => [ts(r), r.net_total_up]) },
-    {
-      name: t("download"),
-      color: colors.down,
-      data: records.map((r) => [ts(r), r.net_total_down]),
-    },
-  ];
   const connSeries: ChartSeries[] = [
     { name: "TCP", color: colors.brand, area: true, data: records.map((r) => [ts(r), r.connections]) },
     { name: "UDP", color: colors.info, data: records.map((r) => [ts(r), r.connections_udp]) },
@@ -526,13 +518,6 @@ export function NodeDetailDialog({
                       </>
                     )}
                   </div>
-                  {hasLoad ? (
-                    <TimeSeriesChart
-                      series={trafficSeries}
-                      mode={mode}
-                      valueFormatter={(v) => formatBytes(v, 0)}
-                    />
-                  ) : null}
                 </div>
               </Panel>
             ) : null}
