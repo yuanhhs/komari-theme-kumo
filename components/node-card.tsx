@@ -136,7 +136,7 @@ export function NodeCard({
         }
       }}
       className={cn(
-        "kumo-fade-in flex cursor-pointer flex-col gap-3 p-4 transition-transform duration-100 ease-out",
+        "kumo-fade-in flex cursor-pointer flex-col gap-3 p-4 transition-[transform,box-shadow,border-color,opacity] duration-100 ease-out",
         "hover:ring-kumo-line hover:-translate-y-px hover:ring-2",
         "focus-visible:ring-kumo-focus focus-visible:ring-2 focus-visible:outline-none",
         !online && "opacity-65",

@@ -39,8 +39,8 @@
         "type": "select",
         "options": "solid,glass",
         "default": "solid",
-        "name": { "zh-CN": "卡片样式", "en": "Card style" },
-        "help": { "zh-CN": "实心或磨砂（半透明 + 背景模糊）", "en": "Solid or frosted glass (translucent + backdrop blur)" }
+        "name": { "zh-CN": "界面质感", "en": "Surface style" },
+        "help": { "zh-CN": "实心或毛玻璃主题（卡片、页头、弹窗、控件半透明 + 背景模糊）", "en": "Solid or glass theme for cards, header, dialogs, and controls" }
       },
       {
         "key": "defaultAccent",

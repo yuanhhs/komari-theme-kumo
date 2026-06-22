@@ -26,7 +26,7 @@ export function Segmented<T extends string | number>({
   return (
     <div
       className={cn(
-        "bg-kumo-recessed inline-flex gap-0.5 rounded-lg p-0.5",
+        "kumo-segmented bg-kumo-recessed inline-flex gap-0.5 rounded-lg p-0.5",
         className,
       )}
     >
@@ -40,7 +40,7 @@ export function Segmented<T extends string | number>({
             aria-pressed={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors",
+              "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-[color,background-color,box-shadow] duration-100 ease-out",
               size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
               active
                 ? "bg-kumo-base text-kumo-default shadow-sm"

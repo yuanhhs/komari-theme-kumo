@@ -47,7 +47,7 @@ function StatTile({
       className={cn(
         "flex items-center gap-3 p-3.5",
         onClick &&
-          "hover:border-kumo-line hover:bg-kumo-tint focus-visible:ring-kumo-focus cursor-pointer transition-colors focus-visible:ring-2 focus-visible:outline-none",
+          "hover:border-kumo-line hover:bg-kumo-tint focus-visible:ring-kumo-focus cursor-pointer transition-[background-color,border-color,box-shadow] duration-100 focus-visible:ring-2 focus-visible:outline-none",
       )}
     >
       <div className="bg-kumo-tint text-kumo-subtle flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">

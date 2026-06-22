@@ -254,7 +254,7 @@ export function SettingsDialog({
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog size="base" className="w-full max-w-md p-6">
+      <Dialog size="base" className="kumo-dialog-surface w-full max-w-md p-6">
         <div className="mb-5 flex items-center justify-between">
           <Dialog.Title className="text-kumo-default text-base font-semibold">
             {t("settings")}
@@ -263,7 +263,7 @@ export function SettingsDialog({
             type="button"
             onClick={() => onOpenChange(false)}
             aria-label={t("close")}
-            className="text-kumo-subtle hover:text-kumo-default hover:bg-kumo-tint rounded-md p-1 transition-colors"
+            className="text-kumo-subtle hover:text-kumo-default hover:bg-kumo-tint rounded-md p-1 transition-[color,background-color] duration-100"
           >
             <XIcon size={18} />
           </button>
@@ -375,7 +375,7 @@ export function SettingsDialog({
                   <button
                     type="button"
                     onClick={handleClearBackground}
-                    className="text-kumo-subtle hover:text-kumo-danger inline-flex items-center gap-1 text-xs transition-colors"
+                    className="text-kumo-subtle hover:text-kumo-danger inline-flex items-center gap-1 text-xs transition-colors duration-100"
                   >
                     <TrashIcon size={14} />
                     {t("removeBackground")}
@@ -393,7 +393,7 @@ export function SettingsDialog({
                 }}
                 placeholder={t("backgroundImageUrl")}
                 aria-label={t("backgroundImageUrl")}
-                className="bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
+                className="kumo-input bg-kumo-base border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border px-3 text-sm outline-none focus:ring-2"
               />
             </div>
             <div className="mt-3 space-y-2">
@@ -453,7 +453,7 @@ export function SettingsDialog({
                   aria-label={a}
                   title={a}
                   className={cn(
-                    "ring-offset-kumo-base relative h-7 w-7 rounded-full ring-2 ring-offset-2 transition",
+                    "ring-offset-kumo-base relative h-7 w-7 rounded-full ring-2 ring-offset-2 transition-[box-shadow,transform] duration-100",
                     accent === a
                       ? "ring-kumo-focus"
                       : "ring-transparent hover:ring-kumo-hairline",

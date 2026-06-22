@@ -35,10 +35,10 @@ export function Toolbar({
                   type="button"
                   onClick={() => onGroup(group)}
                   className={cn(
-                    "rounded-full border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+                    "rounded-full border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color] duration-100",
                     active
                       ? "bg-kumo-brand border-transparent text-white"
-                      : "bg-kumo-base border-kumo-hairline text-kumo-subtle hover:text-kumo-default hover:border-kumo-line",
+                      : "kumo-glass-control bg-kumo-base border-kumo-hairline text-kumo-subtle hover:text-kumo-default hover:border-kumo-line",
                   )}
                 >
                   {group === "all" ? t("all") : group}

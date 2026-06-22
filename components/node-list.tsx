@@ -59,7 +59,7 @@ function NodeRow({
         }
       }}
       className={cn(
-        "hover:bg-kumo-tint focus-visible:bg-kumo-tint flex cursor-pointer items-center gap-4 px-4 py-3 transition-colors outline-none",
+        "hover:bg-kumo-tint focus-visible:bg-kumo-tint flex cursor-pointer items-center gap-4 px-4 py-3 transition-[background-color,opacity] duration-100 outline-none",
         !online && "opacity-60",
       )}
     >

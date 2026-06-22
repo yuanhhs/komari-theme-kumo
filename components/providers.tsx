@@ -141,7 +141,6 @@ interface SettingsContextValue {
     backgroundVideoUrl: string;
   }) => void;
   t: (key: TKey, vars?: Record<string, string | number>) => string;
-  mounted: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -161,7 +160,6 @@ export function Providers({ children }: { children: ReactNode }) {
   const [backgroundImageUrl, setBackgroundImageUrlState] = useState("");
   const [backgroundVideoUrl, setBackgroundVideoUrlState] = useState("");
   const [systemDark, setSystemDark] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   // Hydrate persisted prefs after mount (avoids SSR/client mismatch).
   useEffect(() => {
@@ -193,7 +191,6 @@ export function Providers({ children }: { children: ReactNode }) {
     if (nextVideoUrl && isSafeResourceUrl(nextVideoUrl)) {
       setBackgroundVideoState(nextVideoUrl);
     }
-    setMounted(true);
   }, []);
 
   // Track the system color-scheme preference.
@@ -372,9 +369,8 @@ export function Providers({ children }: { children: ReactNode }) {
       clearBackground,
       seedDefaults,
       t,
-      mounted,
     }),
-    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundVideo, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, clearBackground, seedDefaults, t, mounted],
+    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundVideo, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, clearBackground, seedDefaults, t],
   );
 
   return (

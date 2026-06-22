@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Dialog, Badge, cn } from "@cloudflare/kumo";
 import { XIcon } from "@phosphor-icons/react";
 import {
@@ -40,7 +40,7 @@ import { trafficUsedByType } from "@/lib/traffic";
 type Range = "1" | "6" | "24";
 type MotionPhase = "idle" | "entering" | "open" | "closing";
 
-const DETAIL_MOTION_MS = 240;
+const DETAIL_MOTION_MS = 110;
 
 function Chip({ label, value, icon }: { label: string; value: ReactNode; icon?: ReactNode }) {
   return (
@@ -210,6 +210,7 @@ export function NodeDetailDialog({
   const { t, mode, lang } = useSettings();
   const [range, setRange] = useState<Range>("6");
   const [motionPhase, setMotionPhase] = useState<MotionPhase>("idle");
+  const closeTimerRef = useRef<number | null>(null);
   const hours = Number(range);
   const uuid = view?.node.uuid;
 
@@ -218,12 +219,22 @@ export function NodeDetailDialog({
   const colors = chartColors(mode);
 
   useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!open) {
       setMotionPhase("idle");
       return;
     }
 
     let openFrame = 0;
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
     setMotionPhase("entering");
     openFrame = requestAnimationFrame(() => setMotionPhase("open"));
 
@@ -234,11 +245,18 @@ export function NodeDetailDialog({
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
       onOpenChange(true);
       return;
     }
     setMotionPhase("closing");
-    window.setTimeout(() => onOpenChange(false), DETAIL_MOTION_MS);
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      onOpenChange(false);
+    }, DETAIL_MOTION_MS);
   };
 
   if (!view) return null;
@@ -265,7 +283,7 @@ export function NodeDetailDialog({
   if (node.swap_total > 0) {
     cpuRam.push({
       name: t("swap"),
-      color: colors.warning,
+      color: colors.success,
       data: records.map((r) => [ts(r), ratioPercent(r.swap, r.swap_total)]),
     });
   }
@@ -363,7 +381,7 @@ export function NodeDetailDialog({
       <Dialog
         size="xl"
         className={cn(
-          "node-detail-motion-panel w-full max-w-4xl p-0",
+          "node-detail-motion-panel kumo-dialog-surface w-full max-w-4xl p-0",
           motionPhase === "entering" && "node-detail-motion-from",
           motionPhase === "open" && "node-detail-motion-open",
           motionPhase === "closing" && "node-detail-motion-to",
@@ -390,7 +408,7 @@ export function NodeDetailDialog({
               type="button"
               onClick={() => handleOpenChange(false)}
               aria-label={t("close")}
-              className="text-kumo-subtle hover:text-kumo-default hover:bg-kumo-tint shrink-0 rounded-md p-1.5 transition-colors"
+              className="text-kumo-subtle hover:text-kumo-default hover:bg-kumo-tint shrink-0 rounded-md p-1.5 transition-[color,background-color] duration-100"
             >
               <XIcon size={18} />
             </button>

@@ -63,11 +63,6 @@ export function formatTemp(celsius?: number): string {
   return `${celsius.toFixed(0)}°C`;
 }
 
-/** Thousands-separated integer. */
-export function formatCount(n: number): string {
-  return new Intl.NumberFormat().format(Math.round(n || 0));
-}
-
 /** Localised short date for expiry etc. */
 export function formatDate(iso: string | null, locale: string): string {
   if (!iso) return "";

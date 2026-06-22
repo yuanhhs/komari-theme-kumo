@@ -42,8 +42,8 @@ export function EChart({
     observer.observe(elementRef.current);
     return () => {
       observer.disconnect();
-      chart.dispose();
       chartRef.current = null;
+      window.setTimeout(() => chart.dispose(), 0);
     };
   }, []);
 

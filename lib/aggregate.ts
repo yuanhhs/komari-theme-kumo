@@ -80,23 +80,6 @@ export function computeStats(views: NodeView[]): DashboardStats {
   };
 }
 
-export interface NodeGroup {
-  name: string;
-  views: NodeView[];
-}
-
-/** Group views by `node.group`, preserving the dashboard node order. */
-export function groupNodeViews(views: NodeView[]): NodeGroup[] {
-  const buckets = new Map<string, NodeView[]>();
-  for (const view of views) {
-    const key = view.node.group || "";
-    const list = buckets.get(key);
-    if (list) list.push(view);
-    else buckets.set(key, [view]);
-  }
-  return [...buckets.entries()].map(([name, list]) => ({ name, views: list }));
-}
-
 /** Distinct group names in node order (excluding the empty group). */
 export function groupNames(views: NodeView[]): string[] {
   const names = new Set<string>();

@@ -68,11 +68,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download theme zip
         uses: actions/download-artifact@v4
         with:
           name: komari-theme-kumo
+
+      - name: Generate release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.build.outputs.theme-tag }}
+          THEME_VERSION: ${{ needs.build.outputs.theme-version }}
+        run: node scripts/generate-release-notes.mjs release-notes.md
 
       - name: Publish numbered release
         env:
@@ -92,13 +101,13 @@ jobs:
           gh release create "${RELEASE_TAG}" komari-theme-kumo.zip \
             --repo "$GITHUB_REPOSITORY" \
             --title "${RELEASE_TAG}" \
-            --notes "Automated build ${THEME_VERSION} from ${GITHUB_SHA}." \
+            --notes-file release-notes.md \
             --target "$GITHUB_SHA" \
           || {
             gh release edit "${RELEASE_TAG}" \
               --repo "$GITHUB_REPOSITORY" \
               --title "${RELEASE_TAG}" \
-              --notes "Automated build ${THEME_VERSION} from ${GITHUB_SHA}."
+              --notes-file release-notes.md
             gh release upload "${RELEASE_TAG}" komari-theme-kumo.zip --repo "$GITHUB_REPOSITORY" --clobber
           }
 
@@ -109,10 +118,22 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download theme zip
         uses: actions/download-artifact@v4
         with:
           name: komari-theme-kumo
+
+      - name: Generate release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          THEME_VERSION: ${{ needs.build.outputs.theme-version }}
+        run: node scripts/generate-release-notes.mjs release-notes.md
 
       - name: Publish version release
         env:
@@ -120,5 +141,11 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" komari-theme-kumo.zip \
             --repo "$GITHUB_REPOSITORY" \
-            --title "$GITHUB_REF_NAME" --generate-notes \
-          || gh release upload "$GITHUB_REF_NAME" komari-theme-kumo.zip --repo "$GITHUB_REPOSITORY" --clobber
+            --title "$GITHUB_REF_NAME" --notes-file release-notes.md \
+          || {
+            gh release edit "$GITHUB_REF_NAME" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$GITHUB_REF_NAME" \
+              --notes-file release-notes.md
+            gh release upload "$GITHUB_REF_NAME" komari-theme-kumo.zip --repo "$GITHUB_REPOSITORY" --clobber
+          }

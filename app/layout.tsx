@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 // Runs before paint so the correct light/dark surface is shown immediately.
-const PRE_PAINT_MODE = `(()=>{try{var a=localStorage.getItem("appearance")||"system";var d=a==="dark"||(a!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.setAttribute("data-mode",d?"dark":"light");r.style.colorScheme=d?"dark":"light";var ac=localStorage.getItem("kumo-accent");}catch(e){}})();`;
+const PRE_PAINT_MODE = `(()=>{try{var a=localStorage.getItem("appearance")||"system";var d=a==="dark"||(a!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.setAttribute("data-mode",d?"dark":"light");r.style.colorScheme=d?"dark":"light";var s=localStorage.getItem("kumo-surface");r.setAttribute("data-surface",s==="glass"?"glass":"solid");var ac=localStorage.getItem("kumo-accent");}catch(e){}})();`;
 
 export default function RootLayout({
   children,

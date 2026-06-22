@@ -2,20 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@cloudflare/kumo";
-import {
-  GearIcon,
-  SunIcon,
-  MoonIcon,
-  SignInIcon,
-  MagnifyingGlassIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { XIcon } from "@phosphor-icons/react";
+import { LogIn, Moon, Search, Settings, Sun, SunMoon } from "lucide-react";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { useSettings } from "@/components/providers";
 import { useMe } from "@/hooks/useKomari";
 import { secondsSince } from "@/lib/format";
 import { relativeFromSeconds } from "@/lib/i18n";
 import type { PublicInfo, VersionInfo } from "@/lib/types";
+
+const HEADER_ICON_SIZE = 16;
+const SEARCH_INPUT_ICON_SIZE = 15;
 
 export function SiteHeader({
   info,
@@ -30,7 +27,7 @@ export function SiteHeader({
   search: string;
   onSearch: (value: string) => void;
 }) {
-  const { t, lang, mode, setAppearance } = useSettings();
+  const { t, lang, appearance, setAppearance } = useSettings();
   const { data: me } = useMe();
   const loggedIn = !!me?.logged_in;
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -39,7 +36,9 @@ export function SiteHeader({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const sitename = info?.sitename || "Komari";
-  const toggleMode = () => setAppearance(mode === "dark" ? "light" : "dark");
+  const AppearanceIcon = appearance === "light" ? Sun : appearance === "dark" ? Moon : SunMoon;
+  const toggleMode = () =>
+    setAppearance(appearance === "light" ? "dark" : appearance === "dark" ? "system" : "light");
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -53,7 +52,7 @@ export function SiteHeader({
   }, [searchOpen]);
 
   return (
-    <header className="border-kumo-hairline bg-kumo-canvas/80 sticky top-0 z-30 border-b backdrop-blur-md">
+    <header className="kumo-glass-shell border-kumo-hairline bg-kumo-canvas/80 sticky top-0 z-30 border-b">
       <div className="mx-auto flex h-16 max-w-[var(--app-max-width,1400px)] items-center justify-between gap-3 px-4 sm:px-6">
         <div className="flex min-w-0 items-center">
           <div className="min-w-0">
@@ -78,7 +77,7 @@ export function SiteHeader({
             variant="ghost"
             size="sm"
             shape="square"
-            icon={mode === "dark" ? SunIcon : MoonIcon}
+            icon={<AppearanceIcon size={HEADER_ICON_SIZE} strokeWidth={2} />}
             aria-label={t("appearance")}
             onClick={toggleMode}
           />
@@ -86,7 +85,7 @@ export function SiteHeader({
             variant="ghost"
             size="sm"
             shape="square"
-            icon={MagnifyingGlassIcon}
+            icon={<Search size={HEADER_ICON_SIZE} strokeWidth={2} />}
             aria-label={t("search")}
             onClick={() => setSearchOpen((open) => !open)}
           />
@@ -95,7 +94,7 @@ export function SiteHeader({
               variant="ghost"
               size="sm"
               shape="square"
-              icon={GearIcon}
+              icon={<Settings size={HEADER_ICON_SIZE} strokeWidth={2} />}
               aria-label={t("settings")}
               onClick={() => setSettingsOpen(true)}
             />
@@ -104,7 +103,7 @@ export function SiteHeader({
             variant="ghost"
             size="sm"
             shape="square"
-            icon={SignInIcon}
+            icon={<LogIn size={HEADER_ICON_SIZE} strokeWidth={2} />}
             aria-label={t("login")}
             onClick={() => {
               window.location.href = "/admin";
@@ -112,10 +111,11 @@ export function SiteHeader({
           />
 
           {searchOpen ? (
-            <div className="border-kumo-line bg-kumo-base absolute top-11 right-0 z-40 w-[min(20rem,calc(100vw-2rem))] rounded-lg border p-2 shadow-lg">
+            <div className="kumo-glass-popover border-kumo-line bg-kumo-base absolute top-11 right-0 z-40 w-[min(20rem,calc(100vw-2rem))] rounded-lg border p-2 shadow-lg">
               <div className="relative">
-                <MagnifyingGlassIcon
-                  size={16}
+                <Search
+                  size={SEARCH_INPUT_ICON_SIZE}
+                  strokeWidth={2}
                   className="text-kumo-subtle pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
                 />
                 <input
@@ -127,14 +127,14 @@ export function SiteHeader({
                   }}
                   placeholder={t("searchPlaceholder")}
                   aria-label={t("search")}
-                  className="bg-kumo-canvas border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border pr-8 pl-9 text-sm outline-none focus:ring-2"
+                  className="kumo-input bg-kumo-canvas border-kumo-line text-kumo-default placeholder:text-kumo-placeholder focus:ring-kumo-focus focus:border-kumo-focus h-9 w-full rounded-md border pr-8 pl-9 text-sm outline-none focus:ring-2"
                 />
                 {search ? (
                   <button
                     type="button"
                     onClick={() => onSearch("")}
                     aria-label={t("close")}
-                    className="text-kumo-subtle hover:text-kumo-default absolute top-1/2 right-2.5 -translate-y-1/2 transition-colors"
+                    className="text-kumo-subtle hover:text-kumo-default absolute top-1/2 right-2.5 -translate-y-1/2 transition-colors duration-100"
                   >
                     <XIcon size={15} />
                   </button>

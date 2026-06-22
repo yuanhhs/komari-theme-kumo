@@ -368,7 +368,7 @@ export function RegionGlobe({
     <div className="relative h-full w-full" style={{ contain: "layout paint size" }}>
       <canvas
         ref={canvasRef}
-        className="h-full w-full cursor-grab opacity-0 transition-opacity duration-700"
+        className="h-full w-full cursor-grab opacity-0 transition-opacity duration-200"
         style={{ aspectRatio: "1" }}
         onPointerDown={(e) => {
           pointerInteracting.current = e.clientX - pointerMovement.current;

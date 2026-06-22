@@ -71,7 +71,7 @@ export function RegionDialog({
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog size="base" className="w-full max-w-lg p-0">
+      <Dialog size="base" className="kumo-dialog-surface w-full max-w-lg p-0">
         <div className="flex max-h-[85vh] flex-col">
           <div className="border-kumo-hairline flex items-center justify-between gap-3 border-b px-5 py-4">
             <Dialog.Title className="text-kumo-default flex items-center gap-2 text-base font-semibold">
@@ -83,7 +83,7 @@ export function RegionDialog({
               type="button"
               onClick={() => onOpenChange(false)}
               aria-label={t("close")}
-              className="text-kumo-subtle hover:text-kumo-default hover:bg-kumo-tint shrink-0 rounded-md p-1.5 transition-colors"
+              className="text-kumo-subtle hover:text-kumo-default hover:bg-kumo-tint shrink-0 rounded-md p-1.5 transition-[color,background-color] duration-100"
             >
               <XIcon size={18} />
             </button>
