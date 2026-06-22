@@ -166,6 +166,12 @@ shutdown/                    节点详细界面截图与说明
   在服务时替换为运营者自定义的站点标题/描述。
 - 按主题规范要求，保留 `Powered by Komari Monitor.` 页脚。
 
+## Thanks
+
+- [linux.do 社区](https://linux.do/)
+- [Cloudflare Kumo](https://kumo-ui.com/)
+- [Komari](https://github.com/komari-monitor/komari)
+
 ## 许可证
 
 MIT
