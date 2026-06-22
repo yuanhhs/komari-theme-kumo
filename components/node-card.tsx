@@ -2,7 +2,13 @@
 
 import type { ReactNode } from "react";
 import { cn, Badge } from "@cloudflare/kumo";
-import { ArrowUpIcon, ArrowDownIcon, ClockIcon, HourglassIcon } from "@phosphor-icons/react";
+import {
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ClockIcon,
+  DatabaseIcon,
+  HourglassIcon,
+} from "@phosphor-icons/react";
 import { Cpu, MemoryStick, ReplaceAll, HardDrive } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { UsageBar } from "@/components/ui/indicators";
@@ -13,8 +19,10 @@ import { chartColors } from "@/components/charts/chart-theme";
 import { useSettings } from "@/components/providers";
 import { relativeFromSeconds } from "@/lib/i18n";
 import type { NodeView } from "@/lib/types";
+import type { TrafficLimitType } from "@/lib/types";
 import {
   daysUntil,
+  formatBytes,
   formatPercent,
   formatSpeed,
   formatUptime,
@@ -30,6 +38,22 @@ const SPEED_FULL = 100 * 1024 * 1024;
 function speedFraction(bytesPerSec: number): number {
   if (!Number.isFinite(bytesPerSec) || bytesPerSec <= 0) return 0;
   return Math.min(1, Math.log10(bytesPerSec + 1) / Math.log10(SPEED_FULL));
+}
+
+function trafficUsedByType(type: TrafficLimitType, up: number, down: number): number {
+  switch (type) {
+    case "up":
+      return up;
+    case "down":
+      return down;
+    case "sum":
+      return up + down;
+    case "min":
+      return Math.min(up, down);
+    case "max":
+    default:
+      return Math.max(up, down);
+  }
 }
 
 function MetricRow({
@@ -76,6 +100,23 @@ export function NodeCard({
   const diskPct = ratioPercent(status?.disk ?? 0, diskTotal);
   const swapTotal = status?.swap_total ?? node.swap_total ?? 0;
   const swapPct = ratioPercent(status?.swap ?? 0, swapTotal);
+  const trafficLimit = node.traffic_limit ?? 0;
+  const trafficUsed = status
+    ? trafficUsedByType(
+        node.traffic_limit_type,
+        status.net_total_up ?? 0,
+        status.net_total_down ?? 0,
+      )
+    : 0;
+  const hasTrafficLimit = trafficLimit > 0;
+  const trafficFraction = hasTrafficLimit ? Math.max(0, trafficUsed / trafficLimit) : 0;
+  const trafficPercent = trafficFraction * 100;
+  const trafficColor =
+    trafficPercent >= 100
+      ? colors.danger
+      : trafficPercent >= 80
+        ? colors.warning
+        : colors.info;
 
   // Expiry countdown ring: fills with days left over the billing cycle and
   // shifts amber/red as it nears expiry. No expiry date → a full "∞" ring.
@@ -165,7 +206,12 @@ export function NodeCard({
           </div>
 
           <div className="border-kumo-hairline border-t pt-3">
-            <div className="grid grid-cols-3 place-items-center gap-2">
+            <div
+              className={cn(
+                "grid place-items-center gap-2",
+                hasTrafficLimit ? "grid-cols-4" : "grid-cols-3",
+              )}
+            >
               <CircularGauge
                 fraction={speedFraction(status.net_out)}
                 color={colors.up}
@@ -180,6 +226,15 @@ export function NodeCard({
                 center={<ArrowDownIcon size={16} weight="bold" color={colors.down} />}
                 caption={formatSpeed(status.net_in)}
               />
+              {hasTrafficLimit ? (
+                <CircularGauge
+                  fraction={trafficFraction}
+                  color={trafficColor}
+                  title={`${t("traffic")} (${node.traffic_limit_type}): ${formatBytes(trafficUsed)} / ${formatBytes(trafficLimit)}`}
+                  center={<DatabaseIcon size={15} weight="bold" color={trafficColor} />}
+                  caption={formatPercent(trafficPercent, 0)}
+                />
+              ) : null}
               <CircularGauge
                 fraction={expiryFraction}
                 color={expiryColor}

@@ -25,7 +25,7 @@ import { TimeSeriesChart, type ChartSeries } from "@/components/charts/time-seri
 import { chartColors } from "@/components/charts/chart-theme";
 import { useSettings } from "@/components/providers";
 import { useLoadRecords, usePingRecords } from "@/hooks/useKomari";
-import type { NodeView, StatusRecord } from "@/lib/types";
+import type { NodeView, PingSummary, StatusRecord } from "@/lib/types";
 import {
   formatBytes,
   formatDate,
@@ -101,6 +101,75 @@ function NoData({ label }: { label: string }) {
 }
 
 const ts = (r: { time: string }) => new Date(r.time).getTime();
+
+function latencyColor(ping: PingSummary, colors: ReturnType<typeof chartColors>): string {
+  if (ping.latest < 0 || ping.loss >= 50 || ping.avg >= 250) return colors.danger;
+  if (ping.loss >= 10 || ping.avg >= 120) return colors.warning;
+  return colors.success;
+}
+
+function formatLatency(value: number): string {
+  return value >= 0 ? `${Math.round(value)} ms` : "—";
+}
+
+function LatencyOverview({
+  ping,
+  colors,
+}: {
+  ping: Record<string, PingSummary> | undefined;
+  colors: ReturnType<typeof chartColors>;
+}) {
+  const entries = Object.entries(ping ?? {}).sort(([, a], [, b]) =>
+    a.name.localeCompare(b.name),
+  );
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+      {entries.map(([taskId, item]) => {
+        const color = latencyColor(item, colors);
+        return (
+          <div
+            key={taskId}
+            className="bg-kumo-tint border-kumo-hairline flex min-w-0 flex-col gap-2 rounded-lg border px-3 py-2.5"
+          >
+            <div className="flex min-w-0 items-center justify-between gap-2">
+              <span className="text-kumo-default truncate text-sm font-semibold">
+                {item.name}
+              </span>
+              <span
+                className="rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums"
+                style={{ color }}
+              >
+                {formatLatency(item.latest)}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <div className="text-kumo-subtle">Avg</div>
+                <div className="text-kumo-default font-medium tabular-nums">
+                  {formatLatency(item.avg)}
+                </div>
+              </div>
+              <div>
+                <div className="text-kumo-subtle">Loss</div>
+                <div className="text-kumo-default font-medium tabular-nums">
+                  {item.loss.toFixed(1)}%
+                </div>
+              </div>
+              <div>
+                <div className="text-kumo-subtle">Min / Max</div>
+                <div className="text-kumo-default font-medium tabular-nums">
+                  {Math.round(item.min)} / {Math.round(item.max)}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export function NodeDetailDialog({
   view,
@@ -312,6 +381,15 @@ export function NodeDetailDialog({
 
             {/* Charts */}
             <div className="grid gap-4 lg:grid-cols-2">
+              {status?.ping && Object.keys(status.ping).length > 0 ? (
+                <Panel
+                  title={t("networkLatency")}
+                  icon={<Activity size={13} />}
+                  className="lg:col-span-2"
+                >
+                  <LatencyOverview ping={status.ping} colors={colors} />
+                </Panel>
+              ) : null}
               <Panel
                 title={
                   node.swap_total > 0
