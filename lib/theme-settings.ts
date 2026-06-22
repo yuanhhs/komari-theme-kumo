@@ -16,6 +16,7 @@ import type { Lang } from "@/lib/i18n";
 export interface ThemeOptions {
   footerNote: string;
   backgroundUrl: string;
+  backgroundVideoUrl: string;
   backgroundBrightness: BackgroundBrightness;
   /** Show the per-group filter tabs when groups exist. */
   enableGroupTabs: boolean;
@@ -44,6 +45,14 @@ function asResourceUrl(v: unknown): string {
   return isSafeResourceUrl(url) ? url : "";
 }
 
+function firstResourceUrl(...values: unknown[]): string {
+  for (const value of values) {
+    const url = asResourceUrl(value);
+    if (url) return url;
+  }
+  return "";
+}
+
 function asBrightness(v: unknown): BackgroundBrightness {
   const n = typeof v === "number" ? v : Number(asString(v));
   return n === 20 || n === 40 || n === 60 || n === 80 || n === 100
@@ -68,7 +77,8 @@ export function parseThemeOptions(info?: PublicInfo): ThemeOptions {
   const overview = asString(s.overviewVisibility);
   return {
     footerNote: asString(s.footerNote),
-    backgroundUrl: asResourceUrl(s.backgroundUrl),
+    backgroundUrl: firstResourceUrl(s.backgroundUrl, s.backgroundImage),
+    backgroundVideoUrl: firstResourceUrl(s.backgroundVideoUrl, s.videoBackgroundUrl),
     backgroundBrightness: asBrightness(s.backgroundBrightness),
     enableGroupTabs: asBool(s.enableGroupTabs, true),
     defaultView: VIEWS.includes(view as ViewMode) ? (view as ViewMode) : "grid",

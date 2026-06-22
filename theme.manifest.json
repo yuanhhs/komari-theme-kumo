@@ -76,6 +76,13 @@
         "name": { "zh-CN": "背景图 URL", "en": "Background image URL" }
       },
       {
+        "key": "backgroundVideoUrl",
+        "type": "string",
+        "default": "",
+        "name": { "zh-CN": "动态壁纸 URL", "en": "Video wallpaper URL" },
+        "help": { "zh-CN": "支持 mp4、webm、ogg 视频直链；留空则使用背景图", "en": "Supports direct mp4, webm, or ogg video links; leave empty to use the image background" }
+      },
+      {
         "key": "backgroundBrightness",
         "type": "select",
         "options": "20,40,60,80,100",

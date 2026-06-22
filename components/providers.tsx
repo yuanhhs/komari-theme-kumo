@@ -18,6 +18,7 @@ import {
   type TKey,
 } from "@/lib/i18n";
 import { isSafeResourceUrl } from "@/lib/sanitize";
+import { isVideoResourceUrl } from "@/lib/background-media";
 
 export type Appearance = "light" | "dark" | "system";
 export type Mode = "light" | "dark";
@@ -72,6 +73,7 @@ const LS = {
   surface: "kumo-surface",
   overview: "kumo-overview",
   backgroundImageUrl: "kumo-background-image-url",
+  backgroundVideoUrl: "kumo-background-video-url",
   backgroundBrightness: "kumo-background-brightness",
 } as const;
 
@@ -116,10 +118,13 @@ interface SettingsContextValue {
   setOverview: (v: OverviewVisibility) => void;
   /** Visitor background URL; overrides the admin default locally. Empty when none. */
   background: string;
+  backgroundVideo: string;
   backgroundBrightness: BackgroundBrightness;
   setBackgroundBrightness: (value: BackgroundBrightness) => void;
   backgroundImageUrl: string;
   setBackgroundImageUrl: (url: string) => void;
+  backgroundVideoUrl: string;
+  setBackgroundVideoUrl: (url: string) => void;
   /** Remove the visitor background. */
   clearBackground: () => void;
   /** Apply backend theme settings as the source of truth. */
@@ -133,6 +138,7 @@ interface SettingsContextValue {
     lang: Lang;
     backgroundBrightness: BackgroundBrightness;
     backgroundImageUrl: string;
+    backgroundVideoUrl: string;
   }) => void;
   t: (key: TKey, vars?: Record<string, string | number>) => string;
   mounted: boolean;
@@ -149,9 +155,11 @@ export function Providers({ children }: { children: ReactNode }) {
   const [surface, setSurfaceState] = useState<Surface>("solid");
   const [overview, setOverviewState] = useState<OverviewVisibility>("show");
   const [background, setBackgroundState] = useState<string>("");
+  const [backgroundVideo, setBackgroundVideoState] = useState<string>("");
   const [backgroundBrightness, setBackgroundBrightnessState] =
     useState<BackgroundBrightness>(100);
   const [backgroundImageUrl, setBackgroundImageUrlState] = useState("");
+  const [backgroundVideoUrl, setBackgroundVideoUrlState] = useState("");
   const [systemDark, setSystemDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -173,9 +181,17 @@ export function Providers({ children }: { children: ReactNode }) {
     if (ov === "show" || ov === "hide") setOverviewState(ov);
     setBackgroundBrightnessState(parseBackgroundBrightness(readLS(LS.backgroundBrightness)));
     const imageUrl = readLS(LS.backgroundImageUrl)?.trim() ?? "";
-    setBackgroundImageUrlState(imageUrl);
-    if (imageUrl && isSafeResourceUrl(imageUrl)) {
-      setBackgroundState(imageUrl);
+    const videoUrl = readLS(LS.backgroundVideoUrl)?.trim() ?? "";
+    const imageIsVideo = imageUrl && isVideoResourceUrl(imageUrl);
+    const nextImageUrl = imageIsVideo ? "" : imageUrl;
+    const nextVideoUrl = videoUrl || (imageIsVideo ? imageUrl : "");
+    setBackgroundImageUrlState(nextImageUrl);
+    setBackgroundVideoUrlState(nextVideoUrl);
+    if (nextImageUrl && isSafeResourceUrl(nextImageUrl)) {
+      setBackgroundState(nextImageUrl);
+    }
+    if (nextVideoUrl && isSafeResourceUrl(nextVideoUrl)) {
+      setBackgroundVideoState(nextVideoUrl);
     }
     setMounted(true);
   }, []);
@@ -254,14 +270,29 @@ export function Providers({ children }: { children: ReactNode }) {
   }, []);
   const setBackgroundImageUrl = useCallback((url: string) => {
     const next = url.trim();
-    setBackgroundImageUrlState(next);
-    writeLS(LS.backgroundImageUrl, next);
-    setBackgroundState(next && isSafeResourceUrl(next) ? next : "");
+    const isVideo = isVideoResourceUrl(next);
+    const imageUrl = isVideo ? "" : next;
+    const videoUrl = isVideo ? next : "";
+    setBackgroundImageUrlState(imageUrl);
+    setBackgroundVideoUrlState(videoUrl);
+    writeLS(LS.backgroundImageUrl, imageUrl);
+    writeLS(LS.backgroundVideoUrl, videoUrl);
+    setBackgroundState(imageUrl && isSafeResourceUrl(imageUrl) ? imageUrl : "");
+    setBackgroundVideoState(videoUrl && isSafeResourceUrl(videoUrl) ? videoUrl : "");
+  }, []);
+  const setBackgroundVideoUrl = useCallback((url: string) => {
+    const next = url.trim();
+    setBackgroundVideoUrlState(next);
+    writeLS(LS.backgroundVideoUrl, next);
+    setBackgroundVideoState(next && isSafeResourceUrl(next) ? next : "");
   }, []);
   const clearBackground = useCallback(() => {
     setBackgroundImageUrlState("");
+    setBackgroundVideoUrlState("");
     writeLS(LS.backgroundImageUrl, "");
+    writeLS(LS.backgroundVideoUrl, "");
     setBackgroundState("");
+    setBackgroundVideoState("");
   }, []);
 
   const seedDefaults = useCallback(
@@ -275,6 +306,7 @@ export function Providers({ children }: { children: ReactNode }) {
       lang: Lang;
       backgroundBrightness: BackgroundBrightness;
       backgroundImageUrl: string;
+      backgroundVideoUrl: string;
     }) => {
       setAppearance(d.appearance);
       setView(d.view);
@@ -284,7 +316,13 @@ export function Providers({ children }: { children: ReactNode }) {
       setOverview(d.overview);
       setLang(d.lang);
       setBackgroundBrightness(d.backgroundBrightness);
-      setBackgroundImageUrl(d.backgroundImageUrl);
+      if (d.backgroundVideoUrl) {
+        setBackgroundImageUrl("");
+        setBackgroundVideoUrl(d.backgroundVideoUrl);
+      } else {
+        setBackgroundVideoUrl("");
+        setBackgroundImageUrl(d.backgroundImageUrl);
+      }
     },
     [
       setAppearance,
@@ -296,6 +334,7 @@ export function Providers({ children }: { children: ReactNode }) {
       setLang,
       setBackgroundBrightness,
       setBackgroundImageUrl,
+      setBackgroundVideoUrl,
     ],
   );
 
@@ -323,16 +362,19 @@ export function Providers({ children }: { children: ReactNode }) {
       overview,
       setOverview,
       background,
+      backgroundVideo,
       backgroundBrightness,
       setBackgroundBrightness,
       backgroundImageUrl,
       setBackgroundImageUrl,
+      backgroundVideoUrl,
+      setBackgroundVideoUrl,
       clearBackground,
       seedDefaults,
       t,
       mounted,
     }),
-    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, clearBackground, seedDefaults, t, mounted],
+    [lang, setLang, appearance, setAppearance, mode, view, setView, accent, setAccent, columns, setColumns, surface, setSurface, overview, setOverview, background, backgroundVideo, backgroundBrightness, setBackgroundBrightness, backgroundImageUrl, setBackgroundImageUrl, backgroundVideoUrl, setBackgroundVideoUrl, clearBackground, seedDefaults, t, mounted],
   );
 
   return (

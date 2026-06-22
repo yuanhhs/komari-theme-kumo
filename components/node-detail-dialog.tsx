@@ -35,6 +35,7 @@ import {
   formatUptime,
   ratioPercent,
 } from "@/lib/format";
+import { trafficUsedByType } from "@/lib/traffic";
 
 type Range = "1" | "6" | "24";
 type MotionPhase = "idle" | "entering" | "open" | "closing";
@@ -171,6 +172,30 @@ function LatencyOverview({
   );
 }
 
+function TrafficSummary({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: ReactNode;
+  accent?: string;
+}) {
+  return (
+    <div className="bg-kumo-tint rounded-lg px-3 py-2">
+      <div className="text-kumo-subtle text-[11px] font-medium tracking-wide uppercase">
+        {label}
+      </div>
+      <div
+        className="text-kumo-default mt-1 text-sm font-semibold tabular-nums"
+        style={accent ? { color: accent } : undefined}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export function NodeDetailDialog({
   view,
   open,
@@ -248,6 +273,14 @@ export function NodeDetailDialog({
     { name: t("upload"), color: colors.up, data: records.map((r) => [ts(r), r.net_out]) },
     { name: t("download"), color: colors.down, data: records.map((r) => [ts(r), r.net_in]) },
   ];
+  const trafficSeries: ChartSeries[] = [
+    { name: t("upload"), color: colors.up, data: records.map((r) => [ts(r), r.net_total_up]) },
+    {
+      name: t("download"),
+      color: colors.down,
+      data: records.map((r) => [ts(r), r.net_total_down]),
+    },
+  ];
   const connSeries: ChartSeries[] = [
     { name: "TCP", color: colors.brand, area: true, data: records.map((r) => [ts(r), r.connections]) },
     { name: "UDP", color: colors.info, data: records.map((r) => [ts(r), r.connections_udp]) },
@@ -279,6 +312,22 @@ export function NodeDetailDialog({
 
   const hasLoad = records.length > 0;
   const expiry = formatDate(node.expired_at, lang);
+  const trafficLimit = node.traffic_limit ?? 0;
+  const trafficUsed = status
+    ? trafficUsedByType(
+        node.traffic_limit_type,
+        status.net_total_up ?? 0,
+        status.net_total_down ?? 0,
+      )
+    : 0;
+  const trafficPercent = trafficLimit > 0 ? (trafficUsed / trafficLimit) * 100 : 0;
+  const trafficRemaining = trafficLimit > 0 ? Math.max(0, trafficLimit - trafficUsed) : 0;
+  const trafficColor =
+    trafficPercent >= 100
+      ? colors.danger
+      : trafficPercent >= 80
+        ? colors.warning
+        : colors.info;
 
   // Quick-stat chips: only include metrics the agent actually reports
   // (e.g. hide temperature / swap when there's no reading instead of showing "—").
@@ -381,15 +430,6 @@ export function NodeDetailDialog({
 
             {/* Charts */}
             <div className="grid gap-4 lg:grid-cols-2">
-              {status?.ping && Object.keys(status.ping).length > 0 ? (
-                <Panel
-                  title={t("networkLatency")}
-                  icon={<Activity size={13} />}
-                  className="lg:col-span-2"
-                >
-                  <LatencyOverview ping={status.ping} colors={colors} />
-                </Panel>
-              ) : null}
               <Panel
                 title={
                   node.swap_total > 0
@@ -448,16 +488,54 @@ export function NodeDetailDialog({
                   <NoData label={t("loading")} />
                 )}
               </Panel>
-              {pingSeries.length > 0 ? (
-                <Panel title={t("latency")} icon={<Activity size={13} />} className="lg:col-span-2">
-                  <TimeSeriesChart
-                    series={pingSeries}
-                    mode={mode}
-                    valueFormatter={(v) => `${Math.round(v)} ms`}
-                  />
-                </Panel>
-              ) : null}
             </div>
+
+            {status ? (
+              <Panel title={t("traffic")} icon={<ArrowDownUp size={13} />}>
+                <div className="space-y-4">
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                    <TrafficSummary
+                      label={t("upload")}
+                      value={formatBytes(status.net_total_up)}
+                      accent={colors.up}
+                    />
+                    <TrafficSummary
+                      label={t("download")}
+                      value={formatBytes(status.net_total_down)}
+                      accent={colors.down}
+                    />
+                    {trafficLimit > 0 ? (
+                      <>
+                        <TrafficSummary
+                          label={`${t("used")} (${node.traffic_limit_type})`}
+                          value={`${formatBytes(trafficUsed)} · ${formatPercent(trafficPercent, 0)}`}
+                          accent={trafficColor}
+                        />
+                        <TrafficSummary
+                          label={t("remaining")}
+                          value={`${formatBytes(trafficRemaining)} / ${formatBytes(trafficLimit)}`}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <TrafficSummary
+                          label={t("used")}
+                          value={formatBytes(status.net_total_up + status.net_total_down)}
+                        />
+                        <TrafficSummary label={t("limit")} value={t("unlimited")} />
+                      </>
+                    )}
+                  </div>
+                  {hasLoad ? (
+                    <TimeSeriesChart
+                      series={trafficSeries}
+                      mode={mode}
+                      valueFormatter={(v) => formatBytes(v, 0)}
+                    />
+                  ) : null}
+                </div>
+              </Panel>
+            ) : null}
 
             {/* System info */}
             <Panel title={t("system")}>
@@ -505,6 +583,23 @@ export function NodeDetailDialog({
                 </div>
               </div>
             </Panel>
+
+            {(status?.ping && Object.keys(status.ping).length > 0) || pingSeries.length > 0 ? (
+              <Panel title={t("networkLatency")} icon={<Activity size={13} />}>
+                <div className="space-y-4">
+                  <LatencyOverview ping={status?.ping} colors={colors} />
+                  {pingSeries.length > 0 ? (
+                    <TimeSeriesChart
+                      series={pingSeries}
+                      mode={mode}
+                      valueFormatter={(v) => `${Math.round(v)} ms`}
+                    />
+                  ) : (
+                    <NoData label={t("loading")} />
+                  )}
+                </div>
+              </Panel>
+            ) : null}
           </div>
         </div>
       </Dialog>

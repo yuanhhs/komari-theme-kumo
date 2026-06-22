@@ -60,6 +60,7 @@ export function Dashboard() {
     columns,
     overview,
     background,
+    backgroundVideo,
     backgroundBrightness,
     seedDefaults,
   } = useSettings();
@@ -91,6 +92,7 @@ export function Dashboard() {
         lang: options.defaultLang,
         backgroundBrightness: options.backgroundBrightness,
         backgroundImageUrl: options.backgroundUrl,
+        backgroundVideoUrl: options.backgroundVideoUrl,
       });
     }
   }, [info, options, seedDefaults]);
@@ -128,7 +130,19 @@ export function Dashboard() {
 
   return (
     <div className="relative min-h-screen">
-      {background ? (
+      {backgroundVideo ? (
+        <video
+          aria-hidden
+          className="pointer-events-none fixed inset-0 -z-10 h-full w-full object-cover object-center"
+          style={{ filter: `brightness(${backgroundBrightness}%)` }}
+          src={backgroundVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+        />
+      ) : background ? (
         <div
           aria-hidden
           className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"

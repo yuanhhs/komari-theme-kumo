@@ -28,6 +28,7 @@ import {
 } from "@/components/providers";
 import { saveThemeSettings } from "@/lib/admin";
 import { readFileAsDataUrl } from "@/lib/file";
+import { isVideoResourceUrl } from "@/lib/background-media";
 import type { Lang } from "@/lib/i18n";
 import type { PublicInfo } from "@/lib/types";
 import type { ReactNode } from "react";
@@ -47,6 +48,7 @@ const BACKGROUND_IMAGE_TYPES = new Set([
   "image/gif",
   "image/avif",
 ]);
+const BACKGROUND_VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/ogg"]);
 
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -85,6 +87,7 @@ export function SettingsDialog({
     overview,
     setOverview,
     background,
+    backgroundVideo,
     backgroundBrightness,
     setBackgroundBrightness,
     setBackgroundImageUrl,
@@ -106,7 +109,13 @@ export function SettingsDialog({
     const settings = (info?.theme_settings ?? {}) as Record<string, unknown>;
     settingsRef.current = settings;
     const nextBackgroundUrl =
-      typeof settings.backgroundUrl === "string" ? settings.backgroundUrl : "";
+      typeof settings.backgroundVideoUrl === "string" && settings.backgroundVideoUrl
+        ? settings.backgroundVideoUrl
+        : typeof settings.videoBackgroundUrl === "string" && settings.videoBackgroundUrl
+          ? settings.videoBackgroundUrl
+          : typeof settings.backgroundUrl === "string"
+            ? settings.backgroundUrl
+            : "";
     setBackgroundSettingImageUrl(nextBackgroundUrl);
     setBackgroundSettingStatus("");
   }, [info?.theme_settings]);
@@ -146,9 +155,11 @@ export function SettingsDialog({
     setSavingBackgroundSetting(true);
     setBackgroundSettingStatus("");
     try {
+      const nextUrl = backgroundSettingImageUrl.trim();
+      const isVideo = isVideoResourceUrl(nextUrl);
       await saveThemePatch({
-        backgroundUrl: backgroundSettingImageUrl.trim(),
-        backgroundVideoUrl: "",
+        backgroundUrl: isVideo ? "" : nextUrl,
+        backgroundVideoUrl: isVideo ? nextUrl : "",
         backgroundBrightness: String(backgroundBrightness),
       });
       setBackgroundSettingStatus("saved");
@@ -160,7 +171,7 @@ export function SettingsDialog({
   };
 
   const handleBackgroundFile = async (file: File) => {
-    if (!BACKGROUND_IMAGE_TYPES.has(file.type)) {
+    if (!BACKGROUND_IMAGE_TYPES.has(file.type) && !BACKGROUND_VIDEO_TYPES.has(file.type)) {
       setBackgroundSettingStatus("error");
       return;
     }
@@ -168,12 +179,13 @@ export function SettingsDialog({
     setBackgroundSettingStatus("");
     try {
       const dataUrl = await readFileAsDataUrl(file);
+      const isVideo = BACKGROUND_VIDEO_TYPES.has(file.type);
       setBackgroundSettingImageUrl(dataUrl);
       setBackgroundImageUrl(dataUrl);
       if (info?.theme) {
         await saveThemePatch({
-          backgroundUrl: dataUrl,
-          backgroundVideoUrl: "",
+          backgroundUrl: isVideo ? "" : dataUrl,
+          backgroundVideoUrl: isVideo ? dataUrl : "",
           backgroundBrightness: String(backgroundBrightness),
         });
       }
@@ -329,7 +341,7 @@ export function SettingsDialog({
             <input
               ref={fileRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm,video/ogg"
               className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
@@ -343,13 +355,23 @@ export function SettingsDialog({
                 <ImageIcon size={15} />
                 {t("uploadImage")}
               </Button>
-              {background ? (
+              {background || backgroundVideo ? (
                 <>
-                  <span
-                    aria-hidden
-                    className="border-kumo-hairline h-9 w-14 shrink-0 rounded-md border bg-cover bg-center"
-                    style={{ backgroundImage: `url("${background}")` }}
-                  />
+                  {backgroundVideo ? (
+                    <video
+                      aria-hidden
+                      className="border-kumo-hairline h-9 w-14 shrink-0 rounded-md border object-cover"
+                      src={backgroundVideo}
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <span
+                      aria-hidden
+                      className="border-kumo-hairline h-9 w-14 shrink-0 rounded-md border bg-cover bg-center"
+                      style={{ backgroundImage: `url("${background}")` }}
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={handleClearBackground}

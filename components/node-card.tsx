@@ -19,7 +19,7 @@ import { chartColors } from "@/components/charts/chart-theme";
 import { useSettings } from "@/components/providers";
 import { relativeFromSeconds } from "@/lib/i18n";
 import type { NodeView } from "@/lib/types";
-import type { TrafficLimitType } from "@/lib/types";
+import { trafficUsedByType } from "@/lib/traffic";
 import {
   daysUntil,
   formatBytes,
@@ -38,22 +38,6 @@ const SPEED_FULL = 100 * 1024 * 1024;
 function speedFraction(bytesPerSec: number): number {
   if (!Number.isFinite(bytesPerSec) || bytesPerSec <= 0) return 0;
   return Math.min(1, Math.log10(bytesPerSec + 1) / Math.log10(SPEED_FULL));
-}
-
-function trafficUsedByType(type: TrafficLimitType, up: number, down: number): number {
-  switch (type) {
-    case "up":
-      return up;
-    case "down":
-      return down;
-    case "sum":
-      return up + down;
-    case "min":
-      return Math.min(up, down);
-    case "max":
-    default:
-      return Math.max(up, down);
-  }
 }
 
 function MetricRow({

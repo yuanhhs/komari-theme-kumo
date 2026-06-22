@@ -6,7 +6,6 @@ import {
   PulseIcon,
   GlobeIcon,
   ArrowsDownUpIcon,
-  DatabaseIcon,
   ClockIcon,
   ArrowUpIcon,
   ArrowDownIcon,
@@ -109,7 +108,7 @@ export function StatsBar({ stats, views }: { stats: DashboardStats; views: NodeV
         <StatTile icon={<ArrowsDownUpIcon size={18} />} label={t("networkSpeed")}>
           <UpDown up={formatSpeed(stats.uploadSpeed)} down={formatSpeed(stats.downloadSpeed)} />
         </StatTile>
-        <StatTile icon={<DatabaseIcon size={18} />} label={t("trafficOverview")}>
+        <StatTile icon={<ArrowsDownUpIcon size={18} />} label={t("trafficOverview")}>
           <UpDown up={formatBytes(stats.totalUp)} down={formatBytes(stats.totalDown)} />
         </StatTile>
         <StatTile icon={<ClockIcon size={18} />} label={t("currentTime")}>
