@@ -125,21 +125,35 @@ git push origin 1.0.0      # 触发构建并发布带 zip 的 Release
 ## 项目结构
 
 ```
-app/                 App Router：layout（标题/描述占位符）、page、globals.css
-  api/rpc2/route.ts  仅开发用的代理（静态导出时移除）
+app/                         App Router：layout（标题/描述占位符）、page、globals.css
+  api/rpc2/route.ts          仅开发用的代理（静态导出时移除）
+components/
+  dashboard.tsx              首页布局、背景图 / 动态壁纸渲染
+  node-card.tsx              节点卡片、环形仪表和总流量展示
+  node-list.tsx              列表视图
+  node-detail-dialog.tsx     节点详情弹窗、系统信息、流量信息、延迟图表
+  settings-dialog.tsx        主题设置、背景图 / 视频地址、上传与持久化
+  stats-bar.tsx              顶部统计概览
+  toolbar.tsx                搜索、分组、视图切换、设置入口
+  background-brightness-*    背景亮度滑块及交互效果
+  charts/                    ECharts 时间序列图表
+  ui/                        通用 UI：卡片、徽章、进度、分段控制等
+hooks/useKomari.ts           SWR hooks（实时轮询）
 lib/
-  rpc2.ts            带类型的 JSON-RPC2 客户端（POST /api/rpc2）
-  types.ts           接口响应类型
-  aggregate.ts       节点视图模型 + 统计 + 分组（纯函数）
-  format.ts          字节 / 速率 / 在线时长 / 百分比 等格式化
-  i18n.ts            zh-CN + en 词典
-  file.ts            背景图原图读取（→ data URL）
-  theme-settings.ts  解析 theme_settings
-hooks/useKomari.ts   SWR hooks（实时轮询）
-components/          dashboard、node-card、node-list、node-detail-dialog、
-                     site-header、settings-dialog、stats-bar、toolbar、charts/、ui/
-scripts/package-theme.mjs   静态导出 + zip 打包
-theme.manifest.json  komari-theme.json 源文件（版本号从 package.json 注入）
+  rpc2.ts                    带类型的 JSON-RPC2 客户端（POST /api/rpc2）
+  types.ts                   接口响应类型
+  aggregate.ts               节点视图模型 + 统计 + 分组 + weight 排序
+  background-media.ts        背景图片 / 视频资源识别
+  file.ts                    背景图原图读取（→ data URL）
+  format.ts                  字节 / 速率 / 在线时长 / 百分比 等格式化
+  i18n.ts                    zh-CN + en 词典
+  sanitize.ts                主题设置 URL / HTML 安全处理
+  theme-settings.ts          解析 Komari 后端 theme_settings 默认配置
+  traffic.ts                 按流量限制类型计算已用流量
+scripts/package-theme.mjs    静态导出 + zip 打包
+theme.manifest.json          komari-theme.json 源文件（版本号从 package.json 注入）
+.preview/preview.png         README 与文档站使用的主题预览图
+shutdown/                    节点详细界面截图与说明
 ```
 
 ## 设计说明
