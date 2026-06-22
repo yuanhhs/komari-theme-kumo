@@ -6,7 +6,7 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   ClockIcon,
-  DatabaseIcon,
+  ArrowsDownUpIcon,
   HourglassIcon,
 } from "@phosphor-icons/react";
 import { Cpu, MemoryStick, ReplaceAll, HardDrive } from "lucide-react";
@@ -136,8 +136,8 @@ export function NodeCard({
         }
       }}
       className={cn(
-        "kumo-fade-in flex cursor-pointer flex-col gap-3 p-4 transition-[transform,box-shadow,border-color,background-color] duration-150 ease-out will-change-transform",
-        "hover:ring-kumo-line hover:-translate-y-0.5 hover:ring-2",
+        "kumo-fade-in flex cursor-pointer flex-col gap-3 p-4 transition-transform duration-100 ease-out",
+        "hover:ring-kumo-line hover:-translate-y-px hover:ring-2",
         "focus-visible:ring-kumo-focus focus-visible:ring-2 focus-visible:outline-none",
         !online && "opacity-65",
       )}
@@ -215,7 +215,7 @@ export function NodeCard({
                   fraction={trafficFraction}
                   color={trafficColor}
                   title={`${t("traffic")} (${node.traffic_limit_type}): ${formatBytes(trafficUsed)} / ${formatBytes(trafficLimit)}`}
-                  center={<DatabaseIcon size={15} weight="bold" color={trafficColor} />}
+                  center={<ArrowsDownUpIcon size={15} weight="bold" color={trafficColor} />}
                   caption={formatPercent(trafficPercent, 0)}
                 />
               ) : null}

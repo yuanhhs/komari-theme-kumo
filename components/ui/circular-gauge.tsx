@@ -60,7 +60,7 @@ export function CircularGauge({
             strokeLinecap="round"
             strokeDasharray={circ}
             strokeDashoffset={offset}
-            style={{ transition: "stroke-dashoffset 0.6s ease" }}
+            style={{ transition: "stroke-dashoffset 0.18s ease-out" }}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">{center}</div>
