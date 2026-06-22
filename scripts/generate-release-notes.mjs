@@ -145,18 +145,15 @@ function formatCommit(commit) {
   const author = commit.login
     ? `[@${commit.login}](${commit.htmlUrl || `https://github.com/${commit.login}`})`
     : escapeMarkdown(commit.authorName);
-  const face = commit.avatarUrl
-    ? `<img src="${commit.avatarUrl}" width="20" height="20" alt="${escapeMarkdown(commit.login || commit.authorName)}" align="center" /> `
-    : "";
 
-  return `- ${face}[\`${short}\`](${link}) ${subject} - ${author}`;
+  return `- [\`${short}\`](${link}) ${subject} - ${author}`;
 }
 
 function formatContributor(contributor) {
   if (contributor.login) {
     const url = contributor.htmlUrl || `https://github.com/${contributor.login}`;
     const img = contributor.avatarUrl || avatar(contributor.login, 48);
-    return `<a href="${url}" title="@${contributor.login}"><img src="${img}" width="36" height="36" alt="@${contributor.login}" /></a>`;
+    return `<a href="${url}" title="@${contributor.login}" style="display:inline-block;border-radius:9999px;overflow:hidden;"><img src="${img}" width="36" height="36" alt="@${contributor.login}" style="border-radius:9999px;display:block;" /></a>`;
   }
 
   return `\`${escapeMarkdown(contributor.authorName)}\``;
