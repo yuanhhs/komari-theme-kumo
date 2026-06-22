@@ -7,6 +7,7 @@
   "preview": "preview.png",
   "configuration": {
     "type": "managed",
+    "icon": "Settings",
     "name": { "zh-CN": "Kumo 主题设置", "en": "Kumo Theme" },
     "data": [
       { "type": "title", "name": { "zh-CN": "外观", "en": "Appearance" } },

@@ -43,6 +43,13 @@ const manifest = JSON.parse(readFileSync(p("theme.manifest.json"), "utf8"));
 const pkg = JSON.parse(readFileSync(p("package.json"), "utf8"));
 manifest.version = process.env.THEME_VERSION || pkg.version;
 
+if (manifest.configuration?.type !== "managed") {
+  throw new Error("theme.manifest.json must declare configuration.type = managed");
+}
+if (!Array.isArray(manifest.configuration.data) || manifest.configuration.data.length === 0) {
+  throw new Error("theme.manifest.json must include managed configuration.data");
+}
+
 // 2. Stash the dev-only route handlers (incompatible with output: export).
 //    We stash by content rather than renaming dirs to avoid Windows
 //    file-watcher locks (EPERM on directory rename).
