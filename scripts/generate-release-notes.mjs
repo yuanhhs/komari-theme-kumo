@@ -65,6 +65,10 @@ function avatar(login, size = 40) {
   return `https://github.com/${login}.png?size=${size}`;
 }
 
+function circularAvatarUrl(url, size = 72) {
+  return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=cover&mask=circle&output=png`;
+}
+
 function firstLine(message) {
   return (message || "").split(/\r?\n/)[0].trim();
 }
@@ -152,8 +156,8 @@ function formatCommit(commit) {
 function formatContributor(contributor) {
   if (contributor.login) {
     const url = contributor.htmlUrl || `https://github.com/${contributor.login}`;
-    const img = contributor.avatarUrl || avatar(contributor.login, 48);
-    return `<a href="${url}" title="@${contributor.login}" style="display:inline-block;border-radius:9999px;overflow:hidden;"><img src="${img}" width="36" height="36" alt="@${contributor.login}" style="border-radius:9999px;display:block;" /></a>`;
+    const img = circularAvatarUrl(contributor.avatarUrl || avatar(contributor.login, 72));
+    return `<a href="${url}" title="@${contributor.login}"><img src="${img}" width="36" height="36" alt="@${contributor.login}" /></a>`;
   }
 
   return `\`${escapeMarkdown(contributor.authorName)}\``;
