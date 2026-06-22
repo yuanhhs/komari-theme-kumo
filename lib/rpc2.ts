@@ -12,8 +12,8 @@
 import type {
   LoadRecordsResp,
   MeInfo,
+  NodeCollection,
   NodeLiveStatus,
-  NodeMap,
   PingRecordsResp,
   PublicInfo,
   StatusMap,
@@ -121,8 +121,8 @@ export const komari = {
 
   getMe: (o?: RpcOptions) => rpcCall<MeInfo>("common:getMe", {}, o),
 
-  /** All nodes keyed by uuid. */
-  getNodes: (o?: RpcOptions) => rpcCall<NodeMap>("common:getNodes", {}, o),
+  /** All nodes returned by the backend. */
+  getNodes: (o?: RpcOptions) => rpcCall<NodeCollection>("common:getNodes", {}, o),
 
   /** Latest status for all nodes keyed by uuid. */
   getNodesLatestStatus: (o?: RpcOptions) =>

@@ -1,22 +1,37 @@
-/** Pure helpers that turn raw RPC maps into the view models the UI renders. */
+/** Pure helpers that turn raw RPC data into the view models the UI renders. */
 
-import type { NodeMap, NodeView, StatusMap } from "./types";
+import type { KomariNode, NodeCollection, NodeView, StatusMap } from "./types";
 
 /**
- * Join nodes with their latest status and drop hidden nodes, preserving the
- * backend response order.
+ * Join nodes with their latest status and drop hidden nodes, using the
+ * dashboard order saved by the backend (`weight`).
  */
 export function buildNodeViews(
-  nodes: NodeMap | undefined,
+  nodes: NodeCollection | undefined,
   status: StatusMap | undefined,
 ): NodeView[] {
   if (!nodes) return [];
-  return Object.values(nodes)
+  return normalizeNodes(nodes)
     .filter((node) => !node.hidden)
+    .sort(compareNodesByWeight)
     .map((node) => {
       const s = status?.[node.uuid];
       return { node, status: s, online: Boolean(s?.online) } satisfies NodeView;
     });
+}
+
+function normalizeNodes(nodes: NodeCollection): KomariNode[] {
+  return Array.isArray(nodes) ? [...nodes] : Object.values(nodes);
+}
+
+function compareNodesByWeight(a: KomariNode, b: KomariNode): number {
+  const byWeight = (a.weight ?? 0) - (b.weight ?? 0);
+  if (byWeight !== 0) return byWeight;
+
+  const byCreatedAt = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  if (!Number.isNaN(byCreatedAt) && byCreatedAt !== 0) return byCreatedAt;
+
+  return a.uuid.localeCompare(b.uuid);
 }
 
 export interface DashboardStats {
@@ -70,7 +85,7 @@ export interface NodeGroup {
   views: NodeView[];
 }
 
-/** Group views by `node.group`, preserving the backend node order. */
+/** Group views by `node.group`, preserving the dashboard node order. */
 export function groupNodeViews(views: NodeView[]): NodeGroup[] {
   const buckets = new Map<string, NodeView[]>();
   for (const view of views) {

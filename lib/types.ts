@@ -179,8 +179,8 @@ export interface PingRecordsResp {
   to: string;
 }
 
-/** Map of uuid → node, as returned by `common:getNodes` without a uuid. */
-export type NodeMap = Record<string, KomariNode>;
+/** Nodes returned by `common:getNodes`; newer backends return an array, older ones return a uuid map. */
+export type NodeCollection = KomariNode[] | Record<string, KomariNode>;
 /** Map of uuid → latest status, as returned by `common:getNodesLatestStatus`. */
 export type StatusMap = Record<string, NodeLiveStatus>;
 
