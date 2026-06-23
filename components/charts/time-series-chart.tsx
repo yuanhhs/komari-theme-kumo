@@ -13,6 +13,19 @@ export interface ChartSeries {
   area?: boolean;
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function uniqueSeriesData(data: [number, number][]): [number, number][] {
+  return [...new Map(data.map((point) => [point[0], point])).values()];
+}
+
 export function TimeSeriesChart({
   series,
   mode,
@@ -41,11 +54,15 @@ export function TimeSeriesChart({
         borderWidth: 1,
         textStyle: { color: colors.text, fontSize: 12 },
         formatter: (params: unknown) => {
-          const items = params as Array<{
+          const rawItems = params as Array<{
+            seriesIndex?: number;
             seriesName: string;
             value: [number, number];
             color: string;
           }>;
+          const items = [...new Map(
+            rawItems.map((it) => [`${it.seriesIndex ?? it.seriesName}`, it]),
+          ).values()];
           if (!items.length) return "";
           const date = new Date(items[0].value[0]);
           const time = date.toLocaleTimeString([], {
@@ -57,7 +74,7 @@ export function TimeSeriesChart({
               (it) =>
                 `<div style="display:flex;align-items:center;gap:6px;margin-top:2px">
                    <span style="width:8px;height:8px;border-radius:9999px;background:${it.color}"></span>
-                   <span style="flex:1">${it.seriesName}</span>
+                   <span style="flex:1">${escapeHtml(it.seriesName)}</span>
                    <span style="font-variant-numeric:tabular-nums;font-weight:600">${valueFormatter(it.value[1])}</span>
                  </div>`,
             )
@@ -109,7 +126,7 @@ export function TimeSeriesChart({
               },
             }
           : undefined,
-        data: s.data,
+        data: uniqueSeriesData(s.data),
       })),
     };
   }, [series, colors, mode, yMax, yMin, valueFormatter]);
