@@ -24,7 +24,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { TimeSeriesChart, type ChartSeries } from "@/components/charts/time-series-chart";
 import { chartColors } from "@/components/charts/chart-theme";
 import { useSettings } from "@/components/providers";
-import { useLoadRecords, usePingRecords } from "@/hooks/useKomari";
+import { useLoadRecords, useNodeRecentStatus, usePingRecords } from "@/hooks/useKomari";
 import type { NodeView, PingSummary, StatusRecord } from "@/lib/types";
 import {
   formatBytes,
@@ -37,7 +37,7 @@ import {
 } from "@/lib/format";
 import { trafficUsedByType } from "@/lib/traffic";
 
-type Range = "1" | "6" | "24";
+type Range = "live" | "10m" | "1" | "6" | "24";
 type MotionPhase = "idle" | "entering" | "open" | "closing";
 
 const DETAIL_MOTION_MS = 110;
@@ -211,11 +211,13 @@ export function NodeDetailDialog({
   const [range, setRange] = useState<Range>("6");
   const [motionPhase, setMotionPhase] = useState<MotionPhase>("idle");
   const closeTimerRef = useRef<number | null>(null);
-  const hours = Number(range);
   const uuid = view?.node.uuid;
+  const liveRange = range === "live";
+  const recordRange = range === "10m" || liveRange ? { minutes: 10 } : Number(range);
 
-  const loadQuery = useLoadRecords(uuid, hours, "all", open && !!uuid);
-  const pingQuery = usePingRecords(uuid, hours, open && !!uuid);
+  const loadQuery = useLoadRecords(uuid, recordRange, "all", open && !!uuid && !liveRange);
+  const recentQuery = useNodeRecentStatus(uuid, open && !!uuid && liveRange);
+  const pingQuery = usePingRecords(uuid, recordRange, open && !!uuid && !liveRange);
   const colors = chartColors(mode);
 
   useEffect(() => {
@@ -264,7 +266,7 @@ export function NodeDetailDialog({
 
   // The live server returns load records as a { [uuid]: StatusRecord[] } map
   // even for a single node; fall back to a flat array just in case.
-  const loadData = loadQuery.data?.records;
+  const loadData = liveRange ? recentQuery.data?.records : loadQuery.data?.records;
   const records: StatusRecord[] = (
     Array.isArray(loadData) ? loadData : (loadData?.[node.uuid] ?? [])
   )
@@ -431,6 +433,8 @@ export function NodeDetailDialog({
                 onChange={setRange}
                 size="sm"
                 options={[
+                  { value: "live", label: t("rangeLive") },
+                  { value: "10m", label: t("range10m") },
                   { value: "1", label: t("range1h") },
                   { value: "6", label: t("range6h") },
                   { value: "24", label: t("range24h") },

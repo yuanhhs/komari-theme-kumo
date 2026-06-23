@@ -9,6 +9,8 @@ import type { MeInfo } from "@/lib/types";
 const LIVE_INTERVAL = 2000;
 const NODES_INTERVAL = 30_000;
 const CONFIG_INTERVAL = 60_000;
+const SHORT_HISTORY_INTERVAL = 10_000;
+const HISTORY_INTERVAL = 60_000;
 const DEV_ME: MeInfo = {
   "2fa_enabled": false,
   logged_in: true,
@@ -112,31 +114,56 @@ function latestTimestamp(
 
 export function useLoadRecords(
   uuid: string | undefined,
-  hours: number,
+  range: number | { minutes: number },
   loadType: LoadMetric = "all",
   enabled = true,
 ) {
+  const rangeKey = typeof range === "number" ? `${range}h` : `${range.minutes}m`;
   return useSWR(
-    enabled && uuid ? ["load-records", uuid, hours, loadType] : null,
+    enabled && uuid ? ["load-records", uuid, rangeKey, loadType] : null,
     () =>
       komari.getLoadRecords({
         uuid,
-        hours,
+        ...recordWindow(range),
         load_type: loadType,
         maxCount: 1000,
       }),
-    { refreshInterval: 60_000, revalidateOnFocus: false, keepPreviousData: true },
+    {
+      refreshInterval: typeof range === "number" ? HISTORY_INTERVAL : SHORT_HISTORY_INTERVAL,
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+    },
   );
 }
 
 export function usePingRecords(
   uuid: string | undefined,
-  hours: number,
+  range: number | { minutes: number },
   enabled = true,
 ) {
+  const rangeKey = typeof range === "number" ? `${range}h` : `${range.minutes}m`;
   return useSWR(
-    enabled && uuid ? ["ping-records", uuid, hours] : null,
-    () => komari.getPingRecords({ uuid, hours, maxCount: 1000 }),
-    { refreshInterval: 60_000, revalidateOnFocus: false, keepPreviousData: true },
+    enabled && uuid ? ["ping-records", uuid, rangeKey] : null,
+    () => komari.getPingRecords({ uuid, ...recordWindow(range), maxCount: 1000 }),
+    {
+      refreshInterval: typeof range === "number" ? HISTORY_INTERVAL : SHORT_HISTORY_INTERVAL,
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+    },
   );
+}
+
+export function useNodeRecentStatus(uuid: string | undefined, enabled = true) {
+  return useSWR(
+    enabled && uuid ? ["recent-status", uuid] : null,
+    () => komari.getNodeRecentStatus(uuid!),
+    { refreshInterval: LIVE_INTERVAL, revalidateOnFocus: false, keepPreviousData: true },
+  );
+}
+
+function recordWindow(range: number | { minutes: number }) {
+  if (typeof range === "number") return { hours: range };
+  const end = new Date();
+  const start = new Date(end.getTime() - range.minutes * 60_000);
+  return { start: start.toISOString(), end: end.toISOString() };
 }
