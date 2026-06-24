@@ -222,24 +222,26 @@ export function Dashboard() {
               dangerouslySetInnerHTML={{ __html: footerNote }}
             />
           ) : null}
-          <div className="flex flex-col gap-1">
+          <p className="text-kumo-subtle text-xs">
+            Powered by{" "}
             <a
               href="https://github.com/komari-monitor/komari"
               target="_blank"
               rel="noreferrer"
-              className="text-kumo-subtle hover:text-kumo-link text-xs transition-colors duration-100"
+              className="hover:text-kumo-link underline underline-offset-2 transition-colors duration-100"
             >
-              Powered by Komari Monitor.
+              Komari Monitor
             </a>
+            {" · "}
             <a
               href="https://github.com/yuanhhs/komari-theme-kumo"
               target="_blank"
               rel="noreferrer"
-              className="text-kumo-subtle hover:text-kumo-link text-xs transition-colors duration-100"
+              className="hover:text-kumo-link underline underline-offset-2 transition-colors duration-100"
             >
-              Theme · Kumo
+              Kumo Theme
             </a>
-          </div>
+          </p>
         </div>
       </footer>
 
