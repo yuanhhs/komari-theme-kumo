@@ -564,18 +564,10 @@ export function NodeDetailDialog({
                         />
                         <TrafficSummary
                           label={t("remaining")}
-                          value={`${formatBytes(trafficRemaining)} / ${formatBytes(trafficLimit)}`}
+                          value={formatBytes(trafficRemaining)}
                         />
                       </>
-                    ) : (
-                      <>
-                        <TrafficSummary
-                          label={t("used")}
-                          value={formatBytes(status.net_total_up + status.net_total_down)}
-                        />
-                        <TrafficSummary label={t("limit")} value={t("unlimited")} />
-                      </>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </Panel>
