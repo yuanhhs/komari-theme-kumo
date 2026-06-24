@@ -103,6 +103,41 @@ function NoData({ label }: { label: string }) {
 
 const ts = (r: { time: string }) => new Date(r.time).getTime();
 
+/**
+ * Linearly interpolates missing points between real ping samples.
+ *
+ * Ping is reported every ~60 s, leaving large visual gaps in the chart.
+ * This inserts synthetic points at `stepMs` intervals between consecutive
+ * real samples so every segment has continuous data.
+ *
+ * Only gaps larger than `stepMs * 1.5` are filled; consecutive real points
+ * that are already close together are left untouched.
+ */
+function interpolateSeries(
+  data: [number, number][],
+  stepMs = 15_000,
+): [number, number][] {
+  if (data.length < 2) return data;
+  const out: [number, number][] = [];
+  for (let i = 0; i < data.length; i++) {
+    out.push(data[i]);
+    if (i === data.length - 1) break;
+    const [t1, v1] = data[i];
+    const [t2, v2] = data[i + 1];
+    const gap = t2 - t1;
+    if (gap <= stepMs * 1.5) continue;
+    // Number of synthetic points to insert (excluding endpoints)
+    const steps = Math.floor(gap / stepMs) - 1;
+    for (let k = 1; k <= steps; k++) {
+      const t = t1 + k * stepMs;
+      const ratio = (t - t1) / (t2 - t1);
+      const v = v1 + (v2 - v1) * ratio;
+      out.push([t, v]);
+    }
+  }
+  return out;
+}
+
 function latencyColor(ping: PingSummary, colors: ReturnType<typeof chartColors>): string {
   if (ping.latest < 0 || ping.loss >= 50 || ping.avg >= 250) return colors.danger;
   if (ping.loss >= 10 || ping.avg >= 120) return colors.warning;
@@ -319,7 +354,9 @@ export function NodeDetailDialog({
   const pingSeries: ChartSeries[] = [...byTask.entries()].map(([id, data], i) => ({
     name: status?.ping?.[String(id)]?.name ?? `#${id}`,
     color: pingPalette[i % pingPalette.length],
-    data,
+    // Ping reports ~every 60 s; interpolate at 15 s intervals so every
+    // chart segment has a data point and the line stays continuous.
+    data: interpolateSeries(data, 15_000),
   }));
 
   const hasLoad = records.length > 0;
