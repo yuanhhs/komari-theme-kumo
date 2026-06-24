@@ -214,22 +214,32 @@ export function Dashboard() {
         )}
       </main>
 
-      <footer className="border-kumo-hairline mt-6 border-t">
-        <div className="mx-auto max-w-[1400px] px-4 py-6 text-center sm:px-6">
+      <footer className="kumo-glass-shell border-kumo-hairline bg-kumo-canvas/80 mt-6 border-t">
+        <div className="mx-auto max-w-[1400px] px-4 py-5 sm:px-6">
           {footerNote ? (
             <div
-              className="text-kumo-subtle mb-2 text-sm"
+              className="text-kumo-subtle mb-3 text-sm"
               dangerouslySetInnerHTML={{ __html: footerNote }}
             />
           ) : null}
-          <a
-            href="https://github.com/komari-monitor/komari"
-            target="_blank"
-            rel="noreferrer"
-            className="text-kumo-subtle hover:text-kumo-link text-xs"
-          >
-            Powered by Komari Monitor.
-          </a>
+          <div className="flex flex-col gap-1">
+            <a
+              href="https://github.com/komari-monitor/komari"
+              target="_blank"
+              rel="noreferrer"
+              className="text-kumo-subtle hover:text-kumo-link text-xs transition-colors duration-100"
+            >
+              Powered by Komari Monitor.
+            </a>
+            <a
+              href="https://github.com/yuanhhs/komari-theme-kumo"
+              target="_blank"
+              rel="noreferrer"
+              className="text-kumo-subtle hover:text-kumo-link text-xs transition-colors duration-100"
+            >
+              Theme · Kumo
+            </a>
+          </div>
         </div>
       </footer>
 
