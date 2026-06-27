@@ -9,6 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import { Card } from "@/components/ui/card";
 import { useDashboard, usePublicInfo, useVersion } from "@/hooks/useKomari";
+import { useStatsHistory } from "@/hooks/useStatsHistory";
 import { computeStats, groupNames } from "@/lib/aggregate";
 import { parseThemeOptions } from "@/lib/theme-settings";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -99,6 +100,7 @@ export function Dashboard() {
 
   const stats = useMemo(() => computeStats(views), [views]);
   const groups = useMemo(() => groupNames(views), [views]);
+  const statsHistory = useStatsHistory(stats, lastUpdated);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -179,7 +181,9 @@ export function Dashboard() {
           </div>
         ) : (
           <>
-            {overview === "show" ? <StatsBar stats={stats} views={views} /> : null}
+            {overview === "show" ? (
+              <StatsBar stats={stats} views={views} history={statsHistory} />
+            ) : null}
             <Toolbar
               groups={groups}
               activeGroup={group}

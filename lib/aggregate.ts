@@ -45,6 +45,9 @@ export interface DashboardStats {
   /** cumulative bytes since each agent started */
   totalUp: number;
   totalDown: number;
+  /** mean CPU / memory usage (0-100) across online nodes */
+  avgCpu: number;
+  avgMemory: number;
 }
 
 export function computeStats(views: NodeView[]): DashboardStats {
@@ -54,6 +57,8 @@ export function computeStats(views: NodeView[]): DashboardStats {
   let downloadSpeed = 0;
   let totalUp = 0;
   let totalDown = 0;
+  let cpuSum = 0;
+  let memSum = 0;
 
   for (const { node, status, online: isOnline } of views) {
     if (node.region) regions.add(node.region);
@@ -61,6 +66,9 @@ export function computeStats(views: NodeView[]): DashboardStats {
       online += 1;
       uploadSpeed += status.net_out || 0;
       downloadSpeed += status.net_in || 0;
+      cpuSum += status.cpu || 0;
+      const memTotal = status.ram_total || node.mem_total;
+      if (memTotal > 0) memSum += ((status.ram || 0) / memTotal) * 100;
     }
     if (status) {
       totalUp += status.net_total_up || 0;
@@ -77,6 +85,8 @@ export function computeStats(views: NodeView[]): DashboardStats {
     downloadSpeed,
     totalUp,
     totalDown,
+    avgCpu: online > 0 ? cpuSum / online : 0,
+    avgMemory: online > 0 ? memSum / online : 0,
   };
 }
 

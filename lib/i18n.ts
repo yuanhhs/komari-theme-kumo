@@ -134,6 +134,10 @@ const en: Dict = {
   zoomIn: "Zoom in",
   zoomOut: "Zoom out",
   resetView: "Reset view",
+  average: "Average",
+  peak: "Peak",
+  byNode: "By node",
+  noOnlineNodes: "No online nodes",
 };
 
 const zhCN: Dict = {
@@ -251,6 +255,10 @@ const zhCN: Dict = {
   zoomIn: "放大",
   zoomOut: "缩小",
   resetView: "重置视图",
+  average: "平均",
+  peak: "峰值",
+  byNode: "按节点",
+  noOnlineNodes: "暂无在线节点",
 };
 
 const DICTS: Record<Lang, Dict> = { en, "zh-CN": zhCN };
