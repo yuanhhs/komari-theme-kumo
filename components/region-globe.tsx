@@ -3,6 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Globe } from "cobe";
 import { useSettings } from "@/components/providers";
+import {
+  loadWorldCountries,
+  type CountryFeature,
+  type MultiPolygon,
+  type Polygon,
+  type Position,
+} from "@/lib/countries";
 
 export interface GlobeMarker {
   /** [latitude, longitude] */
@@ -10,125 +17,10 @@ export interface GlobeMarker {
   size: number;
 }
 
-type Position = [number, number];
-type Polygon = Position[][];
-type MultiPolygon = Polygon[];
-
-interface CountryFeature {
-  properties?: {
-    name?: string;
-  };
-  geometry?: {
-    type: "Polygon" | "MultiPolygon";
-    coordinates: Polygon | MultiPolygon;
-  };
-}
-
 interface ProjectedPoint {
   x: number;
   y: number;
   front: boolean;
-}
-
-interface CountriesTopology {
-  objects: {
-    countries: unknown;
-  };
-}
-
-const COUNTRY_NAME_ALIASES: Record<string, string> = {
-  "bosnia and herzegovina": "ba",
-  "bosnia and herz": "ba",
-  "central african rep": "cf",
-  "dem rep congo": "cd",
-  "dominican rep": "do",
-  "eq guinea": "gq",
-  "falkland is": "fk",
-  "hong kong": "hk",
-  "kosovo": "xk",
-  "laos": "la",
-  "macao": "mo",
-  "macedonia": "mk",
-  "n cyprus": "cy",
-  "north korea": "kp",
-  "papua new guinea": "pg",
-  "palestine": "ps",
-  "solomon is": "sb",
-  "s sudan": "ss",
-  "singapore": "sg",
-  "south korea": "kr",
-  "timor leste": "tl",
-  "united states": "us",
-  "united states of america": "us",
-  "united kingdom": "gb",
-  "w sahara": "eh",
-};
-
-function normalizeCountryName(name: string) {
-  return name
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[.’']/g, "")
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/gi, " ")
-    .trim()
-    .toLowerCase();
-}
-
-const COUNTRY_NAME_TO_CODE = (() => {
-  const map = new Map<string, string>();
-  let displayNames: Intl.DisplayNames | null = null;
-  try {
-    displayNames = new Intl.DisplayNames(["en"], { type: "region" });
-  } catch {
-    displayNames = null;
-  }
-
-  if (displayNames) {
-    for (let a = 65; a <= 90; a += 1) {
-      for (let b = 65; b <= 90; b += 1) {
-        const code = String.fromCharCode(a, b);
-        const name = displayNames.of(code);
-        if (name && name !== code) map.set(normalizeCountryName(name), code.toLowerCase());
-      }
-    }
-  }
-
-  for (const [name, code] of Object.entries(COUNTRY_NAME_ALIASES)) {
-    map.set(normalizeCountryName(name), code);
-  }
-  return map;
-})();
-
-function countryFeatureCode(country: CountryFeature) {
-  const name = country.properties?.name;
-  if (!name) return null;
-  return COUNTRY_NAME_TO_CODE.get(normalizeCountryName(name)) ?? null;
-}
-
-let countriesByCodeCache: Map<string, CountryFeature[]> | null = null;
-
-async function loadCountriesByCode() {
-  if (countriesByCodeCache) return countriesByCodeCache;
-  const [{ feature }, topologyModule] = await Promise.all([
-    import("topojson-client"),
-    import("world-atlas/countries-50m.json"),
-  ]);
-  const topology = topologyModule.default as CountriesTopology;
-  const countryCollection = feature(
-    topology,
-    topology.objects.countries,
-  ) as unknown as { features: CountryFeature[] };
-  const map = new Map<string, CountryFeature[]>();
-  for (const country of countryCollection.features) {
-    const code = countryFeatureCode(country);
-    if (!code) continue;
-    const countries = map.get(code);
-    if (countries) countries.push(country);
-    else map.set(code, [country]);
-  }
-  countriesByCodeCache = map;
-  return map;
 }
 
 function latLonToVector(lat: number, lon: number) {
@@ -219,8 +111,8 @@ function CountryHighlights({
 
   useEffect(() => {
     let cancelled = false;
-    void loadCountriesByCode().then((map) => {
-      if (!cancelled) setCountriesByCode(map);
+    void loadWorldCountries().then((world) => {
+      if (!cancelled) setCountriesByCode(world.byCode);
     });
     return () => {
       cancelled = true;

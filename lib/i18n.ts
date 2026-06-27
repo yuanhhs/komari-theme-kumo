@@ -129,6 +129,11 @@ const en: Dict = {
   realtime: "Live",
   expiringSoon: "Expiring soon",
   expired: "Expired",
+  globeView: "Globe",
+  mapView: "Map",
+  zoomIn: "Zoom in",
+  zoomOut: "Zoom out",
+  resetView: "Reset view",
 };
 
 const zhCN: Dict = {
@@ -241,6 +246,11 @@ const zhCN: Dict = {
   realtime: "实时",
   expiringSoon: "即将到期",
   expired: "已过期",
+  globeView: "地球",
+  mapView: "平面",
+  zoomIn: "放大",
+  zoomOut: "缩小",
+  resetView: "重置视图",
 };
 
 const DICTS: Record<Lang, Dict> = { en, "zh-CN": zhCN };

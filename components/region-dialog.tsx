@@ -2,12 +2,16 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { Dialog, Badge } from "@cloudflare/kumo";
-import { XIcon, GlobeIcon } from "@phosphor-icons/react";
+import { XIcon, GlobeIcon, MapTrifoldIcon } from "@phosphor-icons/react";
 import { RegionGlobe, type GlobeMarker } from "@/components/region-globe";
+import { RegionFlatMap, type FlatMapMarker } from "@/components/region-flat-map";
+import { Segmented } from "@/components/ui/segmented";
 import { RegionFlag } from "@/components/ui/region-flag";
 import { useSettings } from "@/components/providers";
 import { regionToCode, regionName, COUNTRY_COORDS } from "@/lib/region";
 import type { NodeView } from "@/lib/types";
+
+type RegionViewMode = "globe" | "map";
 
 interface RegionEntry {
   region: string;
@@ -25,14 +29,15 @@ export function RegionDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { t, lang } = useSettings();
-  const [shouldRenderGlobe, setShouldRenderGlobe] = useState(false);
+  const [shouldRenderViz, setShouldRenderViz] = useState(false);
+  const [viewMode, setViewMode] = useState<RegionViewMode>("globe");
 
   useEffect(() => {
     if (open) {
-      setShouldRenderGlobe(true);
+      setShouldRenderViz(true);
     } else {
       // Delay unmount to let dialog animation finish
-      const timer = setTimeout(() => setShouldRenderGlobe(false), 300);
+      const timer = setTimeout(() => setShouldRenderViz(false), 300);
       return () => clearTimeout(timer);
     }
   }, [open]);
@@ -79,22 +84,59 @@ export function RegionDialog({
               {t("regions")}
               <Badge variant="secondary">{regions.length}</Badge>
             </Dialog.Title>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              aria-label={t("close")}
-              className="text-kumo-subtle hover:text-kumo-default hover:bg-kumo-tint shrink-0 rounded-md p-1.5 transition-[color,background-color] duration-100"
-            >
-              <XIcon size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              <Segmented<RegionViewMode>
+                size="sm"
+                value={viewMode}
+                onChange={setViewMode}
+                options={[
+                  {
+                    value: "globe",
+                    title: t("globeView"),
+                    label: (
+                      <>
+                        <GlobeIcon size={14} weight="bold" />
+                        <span className="hidden sm:inline">{t("globeView")}</span>
+                      </>
+                    ),
+                  },
+                  {
+                    value: "map",
+                    title: t("mapView"),
+                    label: (
+                      <>
+                        <MapTrifoldIcon size={14} weight="bold" />
+                        <span className="hidden sm:inline">{t("mapView")}</span>
+                      </>
+                    ),
+                  },
+                ]}
+              />
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                aria-label={t("close")}
+                className="text-kumo-subtle hover:text-kumo-default hover:bg-kumo-tint shrink-0 rounded-md p-1.5 transition-[color,background-color] duration-100"
+              >
+                <XIcon size={18} />
+              </button>
+            </div>
           </div>
 
           <div className="overflow-y-auto px-5 py-5">
-            <div className="mx-auto aspect-square w-full max-w-[340px]">
-              {shouldRenderGlobe ? (
-                <RegionGlobe markers={markers} countryCodes={countryCodes} />
-              ) : null}
-            </div>
+            {viewMode === "globe" ? (
+              <div className="mx-auto aspect-square w-full max-w-[340px]">
+                {shouldRenderViz ? (
+                  <RegionGlobe markers={markers} countryCodes={countryCodes} />
+                ) : null}
+              </div>
+            ) : (
+              <div className="bg-kumo-tint mx-auto aspect-[2/1] w-full overflow-hidden rounded-xl">
+                {shouldRenderViz ? (
+                  <RegionFlatMap markers={markers} countryCodes={countryCodes} />
+                ) : null}
+              </div>
+            )}
 
             {regions.length > 0 ? (
               <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
