@@ -163,7 +163,6 @@ export function StatsBar({
       <RegionDialog views={views} open={regionOpen} onOpenChange={setRegionOpen} />
       <MetricDialog
         metric={metric}
-        views={views}
         stats={stats}
         history={history}
         onOpenChange={(open) => {

@@ -1,16 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { DashboardStats } from "@/lib/aggregate";
+import type { DashboardStats, StatsSample } from "@/lib/aggregate";
 
-export interface StatsSample {
-  /** Report timestamp (ms). */
-  t: number;
-  avgCpu: number;
-  avgMemory: number;
-  uploadSpeed: number;
-  downloadSpeed: number;
-}
+export type { StatsSample };
 
 const MAX_SAMPLES = 120;
 

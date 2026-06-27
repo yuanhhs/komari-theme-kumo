@@ -1,6 +1,12 @@
 /** Pure helpers that turn raw RPC data into the view models the UI renders. */
 
-import type { KomariNode, NodeCollection, NodeView, StatusMap } from "./types";
+import type {
+  KomariNode,
+  NodeCollection,
+  NodeView,
+  StatusMap,
+  StatusRecord,
+} from "./types";
 
 /**
  * Join nodes with their latest status and drop hidden nodes, using the
@@ -95,4 +101,99 @@ export function groupNames(views: NodeView[]): string[] {
   const names = new Set<string>();
   for (const view of views) if (view.node.group) names.add(view.node.group);
   return [...names];
+}
+
+/** One fleet-wide aggregate sample over time (mirrors the live stat fields). */
+export interface StatsSample {
+  /** Sample timestamp (ms). */
+  t: number;
+  avgCpu: number;
+  avgMemory: number;
+  uploadSpeed: number;
+  downloadSpeed: number;
+}
+
+interface BucketAcc {
+  cpu: number;
+  mem: number;
+  up: number;
+  down: number;
+  n: number;
+}
+
+/**
+ * Collapse per-node history records into a fleet-wide time series: CPU and
+ * memory are averaged across nodes, up/down speeds are summed. Records are
+ * binned into ~`targetPoints` time buckets so nodes reporting on slightly
+ * different clocks still line up. Accepts either response shape of
+ * `common:getRecords` (flat array or `{ [uuid]: records }` map).
+ */
+export function aggregateFleetRecords(
+  records: StatusRecord[] | Record<string, StatusRecord[]>,
+  targetPoints = 120,
+): StatsSample[] {
+  const map = Array.isArray(records) ? { _: records } : records;
+
+  let min = Infinity;
+  let max = -Infinity;
+  const entries: { uuid: string; t: number; r: StatusRecord }[] = [];
+  for (const [uuid, recs] of Object.entries(map)) {
+    for (const r of recs) {
+      const t = new Date(r.time).getTime();
+      if (Number.isNaN(t)) continue;
+      entries.push({ uuid, t, r });
+      if (t < min) min = t;
+      if (t > max) max = t;
+    }
+  }
+  if (entries.length === 0 || !Number.isFinite(min)) return [];
+
+  const span = Math.max(1, max - min);
+  const bucketMs = Math.max(1, Math.floor(span / targetPoints));
+
+  // bucket index -> uuid -> running totals
+  const buckets = new Map<number, Map<string, BucketAcc>>();
+  for (const { uuid, t, r } of entries) {
+    const b = Math.floor((t - min) / bucketMs);
+    let byNode = buckets.get(b);
+    if (!byNode) {
+      byNode = new Map();
+      buckets.set(b, byNode);
+    }
+    let acc = byNode.get(uuid);
+    if (!acc) {
+      acc = { cpu: 0, mem: 0, up: 0, down: 0, n: 0 };
+      byNode.set(uuid, acc);
+    }
+    acc.cpu += r.cpu || 0;
+    acc.mem += r.ram_total > 0 ? ((r.ram || 0) / r.ram_total) * 100 : 0;
+    acc.up += r.net_out || 0;
+    acc.down += r.net_in || 0;
+    acc.n += 1;
+  }
+
+  const samples: StatsSample[] = [];
+  for (const [b, byNode] of [...buckets.entries()].sort((a, z) => a[0] - z[0])) {
+    let cpu = 0;
+    let mem = 0;
+    let up = 0;
+    let down = 0;
+    let nodes = 0;
+    for (const acc of byNode.values()) {
+      // Per-node average within the bucket first, then combine across nodes.
+      cpu += acc.cpu / acc.n;
+      mem += acc.mem / acc.n;
+      up += acc.up / acc.n;
+      down += acc.down / acc.n;
+      nodes += 1;
+    }
+    samples.push({
+      t: min + b * bucketMs + bucketMs / 2,
+      avgCpu: nodes > 0 ? cpu / nodes : 0,
+      avgMemory: nodes > 0 ? mem / nodes : 0,
+      uploadSpeed: up,
+      downloadSpeed: down,
+    });
+  }
+  return samples;
 }

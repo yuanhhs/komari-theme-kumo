@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Dialog, Badge } from "@cloudflare/kumo";
 import {
   XIcon,
@@ -9,68 +9,27 @@ import {
   ArrowDownIcon,
 } from "@phosphor-icons/react";
 import { Cpu, MemoryStick } from "lucide-react";
-import { StatusDot, UsageBar } from "@/components/ui/indicators";
-import { RegionFlag } from "@/components/ui/region-flag";
+import { UsageBar } from "@/components/ui/indicators";
+import { Segmented } from "@/components/ui/segmented";
 import { TimeSeriesChart, type ChartSeries } from "@/components/charts/time-series-chart";
 import { chartColors } from "@/components/charts/chart-theme";
 import { useSettings } from "@/components/providers";
-import type { DashboardStats } from "@/lib/aggregate";
-import type { StatsSample } from "@/hooks/useStatsHistory";
-import type { NodeView } from "@/lib/types";
+import { useFleetLoadRecords } from "@/hooks/useKomari";
 import {
-  formatBytes,
-  formatPercent,
-  formatSpeed,
-  loadLevel,
-  ratioPercent,
-} from "@/lib/format";
+  aggregateFleetRecords,
+  type DashboardStats,
+  type StatsSample,
+} from "@/lib/aggregate";
+import { formatBytes, formatPercent, formatSpeed, loadLevel } from "@/lib/format";
 
 export type MetricKind = "speed" | "cpu" | "memory";
-
-interface MetricRowData {
-  uuid: string;
-  name: string;
-  region: string;
-  /** Usage percent (cpu/memory) or combined speed (speed), used for ranking. */
-  rank: number;
-  percent: number;
-  up: number;
-  down: number;
-}
+type Range = "live" | "10m" | "1" | "6" | "24";
 
 const METRIC_ICON: Record<MetricKind, ReactNode> = {
   speed: <ArrowsDownUpIcon size={20} className="text-kumo-brand" weight="fill" />,
   cpu: <Cpu size={18} className="text-kumo-brand" />,
   memory: <MemoryStick size={18} className="text-kumo-brand" />,
 };
-
-function memPercent(view: NodeView): number {
-  const { node, status } = view;
-  if (!status) return 0;
-  return ratioPercent(status.ram, status.ram_total || node.mem_total);
-}
-
-/** Build the ranked per-node rows for a metric (online nodes only). */
-function buildRows(views: NodeView[], metric: MetricKind): MetricRowData[] {
-  const rows: MetricRowData[] = [];
-  for (const view of views) {
-    const { node, status, online } = view;
-    if (!online || !status) continue;
-    const percent = metric === "cpu" ? status.cpu : memPercent(view);
-    const up = status.net_out || 0;
-    const down = status.net_in || 0;
-    rows.push({
-      uuid: node.uuid,
-      name: node.name,
-      region: node.region,
-      rank: metric === "speed" ? up + down : percent,
-      percent,
-      up,
-      down,
-    });
-  }
-  return rows.sort((a, b) => b.rank - a.rank);
-}
 
 function UpDown({ up, down }: { up: string; down: string }) {
   return (
@@ -133,60 +92,46 @@ function MetricSummary({ metric, stats }: { metric: MetricKind; stats: Dashboard
   );
 }
 
-function NodeRow({ row, metric }: { row: MetricRowData; metric: MetricKind }) {
-  return (
-    <div className="bg-kumo-tint flex min-w-0 items-center gap-2 rounded-lg px-3 py-2">
-      <StatusDot online />
-      <RegionFlag region={row.region} />
-      <span className="text-kumo-default min-w-0 flex-1 truncate text-xs font-medium">
-        {row.name}
-      </span>
-      {metric === "speed" ? (
-        <span className="text-kumo-default shrink-0 text-xs font-semibold">
-          <UpDown up={formatSpeed(row.up)} down={formatSpeed(row.down)} />
-        </span>
-      ) : (
-        <span className="text-kumo-default shrink-0 text-xs font-semibold tabular-nums">
-          {formatPercent(row.percent, 0)}
-        </span>
-      )}
-    </div>
-  );
-}
-
 /**
  * Drill-down dialog opened from an overview stat tile. Shows an aggregate
- * summary, a fleet-wide time-series chart (same type as the node detail page,
- * fed by an in-memory rolling history), and a per-node ranking. The
- * network-speed view also carries the total-traffic figures that used to sit
- * in the overview bar.
+ * summary plus a fleet-wide time-series chart (same type and range selector as
+ * the node detail page). The "Live" range uses the in-memory rolling history;
+ * the historical ranges fetch every node's records and average them. The
+ * network-speed view also carries the total-traffic figures that used to sit in
+ * the overview bar.
  */
 export function MetricDialog({
   metric,
-  views,
   stats,
   history,
   onOpenChange,
 }: {
   metric: MetricKind | null;
-  views: NodeView[];
   stats: DashboardStats;
   history: StatsSample[];
   onOpenChange: (open: boolean) => void;
 }) {
   const { t, mode } = useSettings();
-  const rows = useMemo(
-    () => (metric ? buildRows(views, metric) : []),
-    [views, metric],
-  );
+  const [range, setRange] = useState<Range>("live");
+
+  const liveRange = range === "live";
+  const recordRange = range === "10m" || liveRange ? { minutes: 10 } : Number(range);
+  const fleetQuery = useFleetLoadRecords(recordRange, metric !== null && !liveRange);
+
+  const fetched = useMemo<StatsSample[]>(() => {
+    const data = fleetQuery.data?.records;
+    return data ? aggregateFleetRecords(data) : [];
+  }, [fleetQuery.data]);
+
+  const samples = liveRange ? history : fetched;
 
   const series = useMemo<ChartSeries[]>(() => {
     if (!metric) return [];
     const colors = chartColors(mode);
     if (metric === "speed") {
       return [
-        { name: t("upload"), color: colors.up, data: history.map((s) => [s.t, s.uploadSpeed]) },
-        { name: t("download"), color: colors.down, data: history.map((s) => [s.t, s.downloadSpeed]) },
+        { name: t("upload"), color: colors.up, data: samples.map((s) => [s.t, s.uploadSpeed]) },
+        { name: t("download"), color: colors.down, data: samples.map((s) => [s.t, s.downloadSpeed]) },
       ];
     }
     return [
@@ -194,13 +139,15 @@ export function MetricDialog({
         name: metric === "cpu" ? t("cpu") : t("memory"),
         color: colors.brand,
         area: true,
-        data: history.map((s) => [s.t, metric === "cpu" ? s.avgCpu : s.avgMemory]),
+        data: samples.map((s) => [s.t, metric === "cpu" ? s.avgCpu : s.avgMemory]),
       },
     ];
-  }, [metric, history, mode, t]);
+  }, [metric, samples, mode, t]);
 
   const title = metric === "speed" ? t("networkSpeed") : metric === "cpu" ? t("cpu") : t("memory");
   const isSpeed = metric === "speed";
+  const loadingHistory = !liveRange && fleetQuery.isLoading;
+  const hasChart = samples.length > 1 && !loadingHistory;
 
   return (
     <Dialog.Root open={metric !== null} onOpenChange={onOpenChange}>
@@ -211,7 +158,7 @@ export function MetricDialog({
               <Dialog.Title className="text-kumo-default flex items-center gap-2 text-base font-semibold">
                 {METRIC_ICON[metric]}
                 {title}
-                <Badge variant="secondary">{rows.length}</Badge>
+                <Badge variant="secondary">{stats.online}</Badge>
               </Dialog.Title>
               <button
                 type="button"
@@ -226,7 +173,22 @@ export function MetricDialog({
             <div className="space-y-4 overflow-y-auto px-5 py-5">
               <MetricSummary metric={metric} stats={stats} />
 
-              {history.length > 1 ? (
+              <div className="flex items-center justify-end">
+                <Segmented<Range>
+                  value={range}
+                  onChange={setRange}
+                  size="sm"
+                  options={[
+                    { value: "live", label: t("rangeLive") },
+                    { value: "10m", label: t("range10m") },
+                    { value: "1", label: t("range1h") },
+                    { value: "6", label: t("range6h") },
+                    { value: "24", label: t("range24h") },
+                  ]}
+                />
+              </div>
+
+              {hasChart ? (
                 <TimeSeriesChart
                   series={series}
                   mode={mode}
@@ -240,19 +202,6 @@ export function MetricDialog({
                   {t("loading")}
                 </div>
               )}
-
-              {rows.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="text-kumo-subtle text-xs font-semibold tracking-wide uppercase">
-                    {t("byNode")}
-                  </div>
-                  <div className="space-y-2">
-                    {rows.map((row) => (
-                      <NodeRow key={row.uuid} row={row} metric={metric} />
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
         ) : null}

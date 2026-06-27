@@ -161,6 +161,32 @@ export function useNodeRecentStatus(uuid: string | undefined, enabled = true) {
   );
 }
 
+/**
+ * Fleet-wide load history (all nodes) for a time range. Omitting the uuid makes
+ * `common:getRecords` return a `{ [uuid]: records }` map for every node, which
+ * the overview drill-down aggregates into a single time series.
+ */
+export function useFleetLoadRecords(
+  range: number | { minutes: number },
+  enabled = true,
+) {
+  const rangeKey = typeof range === "number" ? `${range}h` : `${range.minutes}m`;
+  return useSWR(
+    enabled ? ["fleet-load-records", rangeKey] : null,
+    () =>
+      komari.getLoadRecords({
+        ...recordWindow(range),
+        load_type: "all",
+        maxCount: 1000,
+      }),
+    {
+      refreshInterval: typeof range === "number" ? HISTORY_INTERVAL : SHORT_HISTORY_INTERVAL,
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+    },
+  );
+}
+
 function recordWindow(range: number | { minutes: number }) {
   if (typeof range === "number") return { hours: range };
   const end = new Date();
