@@ -420,7 +420,9 @@ export function NodeDetailDialog({
       <Dialog
         size="xl"
         className={cn(
-          "node-detail-motion-panel kumo-dialog-surface w-full max-w-4xl p-0",
+          // kumo's size="xl" forces min-w-[48rem]; drop it on mobile so the
+          // dialog fits the viewport and only widens from the `sm` breakpoint up.
+          "node-detail-motion-panel kumo-dialog-surface w-full max-w-4xl min-w-0! p-0 sm:min-w-[48rem]!",
           motionPhase === "entering" && "node-detail-motion-from",
           motionPhase === "open" && "node-detail-motion-open",
           motionPhase === "closing" && "node-detail-motion-to",
